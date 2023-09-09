@@ -1,0 +1,37 @@
+{
+  "name": "Scheduler",
+  "version": "1.0.0",
+  "description": "Appointment Scheduler",
+  "main": "app.ts",
+  "repository": "https://github.com/hermy1/scheduler-server",
+  "author": "hermy1 <49494077+hermy1@users.noreply.github.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.3",
+    "@types/config": "^3.3.1",
+    "@types/cookie-parser": "^1.4.4",
+    "@types/cors": "^2.8.14",
+    "@types/express": "^4.17.17",
+    "@types/jsonwebtoken": "^9.0.2",
+    "@types/lodash": "^4.14.198",
+    "@types/morgan": "^1.9.5",
+    "@types/node": "^20.6.0",
+    "morgan": "^1.10.0",
+    "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "@typegoose/typegoose": "^11.5.0",
+    "bcryptjs": "^2.4.3",
+    "config": "^3.3.9",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "lodash": "^4.17.21",
+    "mongoose": "^7.5.0",
+    "redis": "^4.6.8",
+    "ts-node-dev": "^2.0.0",
+    "zod": "^3.22.2"
+  }
+}
