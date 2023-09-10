@@ -6,6 +6,9 @@
   "repository": "https://github.com/hermy1/scheduler-server",
   "author": "hermy1 <49494077+hermy1@users.noreply.github.com>",
   "license": "MIT",
+  "scripts": {
+    "start": "ts-node-dev --respawn --transpile-only src/app.ts"
+  },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.3",
     "@types/config": "^3.3.1",
