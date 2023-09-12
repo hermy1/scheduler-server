@@ -1,5 +1,5 @@
 
-# 📅 Scheduling Server 🎓
+# 📅 Scheduling Server 
 
 A Student Scheduling App Server! A team project.  This Node.js and TypeScript-powered API allows students to schedule appointments with their professors 🚀
 
@@ -94,5 +94,3 @@ This project is licensed under the MIT License - see the [LICENSE.md](/LICENSE.m
 
 Happy scheduling! 📚📆🎉
 ```
-
-This version adds more emojis to enhance the visual appeal of the README.md file while keeping the same information and structure.
