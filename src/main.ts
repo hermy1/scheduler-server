@@ -5,6 +5,7 @@ import * as http from 'http';
 import config from './core/config';
 import { Me } from './core/models/me';
 import session from 'express-session';
+import userRoutes from './core/routes/user';
 
 
 interface MainOptions {
@@ -14,7 +15,7 @@ interface MainOptions {
 //express session
 declare module 'express-session' {
     interface SessionData {
-        me: Me;
+        Me: Me;
     }
 }
 
@@ -35,10 +36,11 @@ export async function main (options: MainOptions){
         //set session
         app.use(sess);
         //set routes
+        app.use('/user', userRoutes);
         
         //sample hello world route 
         app.get('/', (req: Request, res: Response, next: NextFunction) => {
-            res.send('Hello world');
+            res.json('Hello world');
         });
 
     //start server

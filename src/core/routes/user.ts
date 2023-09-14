@@ -1,6 +1,6 @@
 import express, { Request, Response, NextFunction, Router } from "express";
 import { Me } from "../models/me";
-import bycrpt from "bcrypt";
+// import bycrpt from "bcrypt";
 
 
 const router: Router = express.Router();
@@ -21,3 +21,5 @@ router.get("/ping", async (req: Request, res: Response, next: NextFunction) => {
     console.log(err);
   }
 });
+
+export default router;
