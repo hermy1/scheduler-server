@@ -21,6 +21,7 @@ Before you begin, ensure you have met the following requirements:
 
 - Node.js and npm installed (recommend using Node.js LTS version)
 - MongoDB server running locally or accessible
+- Additionally this project uses yarn to install a dependency ```bash yarn add [dependency] ``` this is the equivalent of npm install [dependency]
 - Docker installed (optional)
 
 ## 🚀 Installation
@@ -42,19 +43,18 @@ To get started, follow these steps:
 
 3. **Configure Environment Variables:**
 
-   Create a `.env` file in the root directory and set the following variables:
+   Create a `.env` file in the root directory by running a bash command:
 
    ```
-   MONGODB_URI=<your_mongodb_connection_string>
-   SECRET_KEY=<your_secret_key>
+   cp .env.example .env
    ```
 
-   Replace `<your_mongodb_connection_string>` with your MongoDB connection string and `<your_secret_key>` with a secret key for JWT token generation.
+   Then fill the appropriate variables in newly created .env file. NEVER COMMIT .env file to GIT
 
 4. **Start the Server:**
 
    ```bash
-   yarn run dev
+   yarn start:dev
    ```
 
 ## 🐳 Docker Support (Optional)
