@@ -39,9 +39,9 @@ export async function main (options: MainOptions){
         app.use('/user', userRoutes);
         
         //sample hello world route 
-        app.get('/', (req: Request, res: Response, next: NextFunction) => {
-            res.json('Hello world');
-        });
+        // app.get('/', (req: Request, res: Response, next: NextFunction) => {
+        //     res.json('Hello world');
+        // });
 
     //start server
     const server = http.createServer(app);
