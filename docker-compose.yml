@@ -29,12 +29,15 @@ services:
       MONGO_PASSWORD: ${MONGO_PASS}
       MONGO_DATABASE: ${MONGO_DATABASE}
     volumes:
-      - data:/data/db
+      - mongo:/data/db
       # - ./data:/data/db if you want to use a volume 
     networks:
       - default
 networks:
   default:
+volumes:
+  mongo:
+
 
     
 

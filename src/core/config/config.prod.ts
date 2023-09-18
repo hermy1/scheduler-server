@@ -9,7 +9,7 @@ const config: Config = {
         database: process.env.DB_DATABASE || ''
     },
     server: {
-        secret: process.env.SECRET || 'ISJFOWIEJOWJEOIWE'
+        secret: process.env.SECRET || ''
     }
 }
 

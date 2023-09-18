@@ -1,4 +1,5 @@
 import { ObjectId } from "mongodb";
+import { getDB } from "../config/utils/mongohelper";
 
 export default class User {
     _id: ObjectId = new ObjectId();
@@ -17,3 +18,18 @@ export default class User {
     createdAt: Date = new Date();
     updatedAt: Date = new Date();
 }
+
+//get all users, ignore this for now
+export const getAllUsers = async (): Promise<User[]> => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let db = await getDB();
+        const collection = db.collection<User>("users");
+        const result = await collection.find({}).toArray();
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  };
+  
