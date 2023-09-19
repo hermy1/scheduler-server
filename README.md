@@ -31,7 +31,7 @@ To get started, follow these steps:
 1. **Clone this repository to your local machine:**
 
    ```bash
-   git clone https://github.com/your/repository.git
+   git clone https://github.com/hermy1/scheduler-server.git
    cd scheduler-server
    ```
 
@@ -49,9 +49,13 @@ To get started, follow these steps:
    cp .env.example .env
    ```
 
-   Then fill the appropriate variables in newly created .env file. NEVER COMMIT .env file to GIT
+   Then fill the appropriate variables in newly created .env file. for example
+   SECRET="joweijwejwljoeijweo"
+   NODE_ENV=development
+   MONGO_DATABASE= add the database
+   etc 
 
-4. **Start the Server:**
+5. **Start the Server:**
 
    ```bash
    yarn start:dev
