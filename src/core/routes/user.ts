@@ -1,11 +1,12 @@
 import express, { Request, Response, NextFunction, Router } from "express";
 import { Me } from "../../models/me";
 import { isLoggedIn, isProfessor, isStudent } from "../middleware/auth";
-import { checkIfUserExists } from "../../mongo/queries/users";
+import { checkIfUserExists, getUserbyUsername } from "../../mongo/queries/users";
 import { insertNewUser } from "../../mongo/mutations/users";
 import bycrpt, { genSaltSync, hashSync } from "bcrypt";
-import { User } from "../../models/user";
+import { User, UserRole } from "../../models/user";
 import { MongoInsertError } from "../errors/mongo";
+import { getAllStudents, getAllProfessors } from "../../mongo/queries/users";
 
 const router: Router = express.Router();
 //test route
@@ -16,7 +17,7 @@ router.get("/ping", async (req: Request, res: Response, next: NextFunction) => {
     } else {
       let me = new Me();
       me.username = "student";
-      me.isStudent = true;
+      me.role = UserRole.Student;
       req.session.Me = me;
       res.json("pong");
     }
@@ -90,6 +91,27 @@ router.post(
   }
 );
 
+//login 
+router.post("/login", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { username, password } = req.body;
+    const user = await getUserbyUsername(username);
+    if(user) {
+      const isPasswordCorrect = bycrpt.compareSync(password, user.password);
+      if(isPasswordCorrect) {
+        req.session.Me = user;
+        console.log(req.session.Me);
+        res.json({message: "Login successful", Me: req.session.Me.role});
+      } else {
+        res.json({message: "Password is incorrect"});
+        throw new Error("Password is incorrect");
+      }
+    }
+  } catch (err) {
+    next(err);
+  }
+});
+
 //profile
 router.get(
   "/profile",
@@ -107,5 +129,26 @@ router.get(
     }
   }
 );
+
+//get all students
+router.get('/students', isLoggedIn, isProfessor, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const students = await getAllStudents();
+    res.json(students);
+  } catch (err) {
+    next(err);
+  }
+});
+
+//get all professors
+router.get('/professors', isLoggedIn, isProfessor, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const professors = await getAllProfessors();
+    res.json(professors);
+  } catch (err) {
+    next(err);
+  }
+});
+
 
 export default router;

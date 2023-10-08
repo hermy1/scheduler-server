@@ -1,6 +1,7 @@
+import { ObjectId } from 'mongodb';
+import { UserRole } from './user';
 export class Me{
-    _id: string = '';
+    _id: ObjectId = new ObjectId();
     username: string = '';
-    isStudent: boolean = false;
-    isProfessor: boolean = false;
+    role: UserRole = UserRole.Student || UserRole.Professor;
 }

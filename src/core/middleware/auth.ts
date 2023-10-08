@@ -1,6 +1,7 @@
 //middleware 
 import { Request, Response, NextFunction } from 'express';
-import { UnauthorizedError } from '../errors/usert';
+import { UnauthorizedError } from '../errors/user';
+import { User, UserRole } from '../../models/user';
 
 //if user is loggedin 
 export const isLoggedIn = async (req: Request, res: Response, next: NextFunction) => {
@@ -26,7 +27,7 @@ export const isLoggedIn = async (req: Request, res: Response, next: NextFunction
 export const isStudent = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const me = req.session.Me;
-        if (me && me.isStudent) {
+        if (me && me.role === UserRole.Student) {
             next();
         } else {
             throw new UnauthorizedError("Unauthorized");
@@ -45,7 +46,7 @@ export const isStudent = async (req: Request, res: Response, next: NextFunction)
 export const isProfessor = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const me = req.session.Me;
-        if (me && me.isProfessor) {
+        if (me && me.role === UserRole.Professor) {
             next();
         } else {
             throw new UnauthorizedError("Unauthorized");
