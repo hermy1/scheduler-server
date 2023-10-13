@@ -112,7 +112,7 @@ router.post("/login", async (req: Request, res: Response, next: NextFunction) =>
   }
 });
 
-//profile
+//profile of the person logged in
 router.get(
   "/profile",
   isLoggedIn,
@@ -145,6 +145,20 @@ router.get('/professors', isLoggedIn, isProfessor, async (req: Request, res: Res
   try {
     const professors = await getAllProfessors();
     res.json(professors);
+  } catch (err) {
+    next(err);
+  }
+});
+
+//logout
+router.get("/logout", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    req.session.destroy((err) => {
+      if (err) {
+        console.log(err);
+      }
+    });
+    res.json({ message: "Logged out successfully" });
   } catch (err) {
     next(err);
   }

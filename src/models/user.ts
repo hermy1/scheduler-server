@@ -3,7 +3,7 @@ import { ObjectId } from "mongodb";
 //user Role
 export enum UserRole {
     Student = "student",
-    Professor = "professor"
+    Professor = "professor",
 }
 
 export class User {

@@ -21,7 +21,7 @@ Before you begin, ensure you have met the following requirements:
 
 - Node.js and npm installed (recommend using Node.js LTS version)
 - MongoDB server running locally or accessible
-- Additionally this project uses yarn to install a dependency ```bash yarn add [dependency] ``` this is the equivalent of npm install [dependency]
+- connect-mongo dependency is used to store session information in the database. if it's not working make sure you install with force flag ```bash npm install connect-mongo --force ``` for now this is a temporary fix.
 - Docker installed (optional)
 
 ## 🚀 Installation
