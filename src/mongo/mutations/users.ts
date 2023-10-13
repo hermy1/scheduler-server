@@ -1,6 +1,7 @@
 import { getDB } from "../../core/config/utils/mongohelper";
 import { MongoInsertError } from "../../core/errors/mongo";
 import { User } from "../../models/user";
+import { UserRole } from "../../models/user";
 
 export const insertNewUser = async (
   username: string,
@@ -20,7 +21,7 @@ export const insertNewUser = async (
   const user = new User();
   user.username = username;
   user.password = password;
-  user.role = role;
+  user.role = role as UserRole;
   user.email = email;
   user.major = major;
   user.minor = minor;

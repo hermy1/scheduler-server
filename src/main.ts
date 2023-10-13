@@ -7,6 +7,7 @@ import { Me } from "./models/me";
 import session from "express-session";
 import userRoutes from "./core/routes/user";
 import professorRoutes from "./core/routes/professor";
+import MongoStore from "connect-mongo";
 
 interface MainOptions {
   port: number;
@@ -23,6 +24,11 @@ declare module "express-session" {
 export async function main(options: MainOptions) {
   try {
     const app = express();
+    //Mongo store for session in db
+    const mongoStore = MongoStore.create({
+      mongoUrl: config.server.mongoConnect,
+      collectionName: "sessions",
+    })
     //set body parser and limit size for attacks
     app.use(bodyParser.json({ limit: "5mb" }));
     // for parsing application/x-www-form-urlencoded
@@ -31,7 +37,9 @@ export async function main(options: MainOptions) {
       secret: config.server.secret,
       resave: false,
       saveUninitialized: false,
-      cookie: { secure: false, maxAge: 6000000 },
+      cookie: { secure: false, maxAge: 86400000 },
+      //call mongo store for session
+      store: mongoStore
     });
     //set session
     app.use(sess);
