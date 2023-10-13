@@ -3,7 +3,7 @@ import { ObjectId } from "mongodb";
 export enum AppointmentStatus {
         Pending = "pending",
         Accepted = "accepted",
-        Rejected = "rejected",
+        Rejected = "declined",
         Cancelled = "cancelled"
 }
 
