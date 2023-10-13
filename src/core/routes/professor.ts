@@ -12,7 +12,7 @@ router.get('/advisors', async (req: Request, res: Response, next: NextFunction) 
 {
     try 
     {
-        res.json('Successful')
+        res.json('Successful get advisor')
     } catch(err)
     
     {
