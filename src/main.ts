@@ -6,6 +6,7 @@ import config from "./core/config";
 import { Me } from "./models/me";
 import session from "express-session";
 import userRoutes from "./core/routes/user";
+import professorRoutes from "./core/routes/professor";
 
 interface MainOptions {
   port: number;
@@ -34,9 +35,13 @@ export async function main(options: MainOptions) {
     });
     //set session
     app.use(sess);
+    
     //set routes
     app.use("/user", userRoutes);
 
+    //professor routes
+    app.use("/professor", professorRoutes);
+    
     //sample hello world route
     app.get("/", (req: Request, res: Response, next: NextFunction) => {
       res.json("Hello world, Root route");
