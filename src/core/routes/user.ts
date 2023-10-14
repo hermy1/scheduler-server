@@ -1,14 +1,14 @@
 import express, { Request, Response, NextFunction, Router } from "express";
 import { Me } from "../../models/me";
 import { isLoggedIn, isProfessor, isStudent } from "../middleware/auth";
-import { checkIfUserExists, getUserbyUsername } from "../../mongo/queries/users";
+import { checkIfUserExists, getUserbyEmail, getUserbyId, getUserbyUsername } from "../../mongo/queries/users";
 import { changePassword, insertNewUser, resetPassword } from "../../mongo/mutations/users";
 import bycrpt, { genSaltSync, hashSync } from "bcrypt";
 import { User, UserRole } from "../../models/user";
 import { MongoInsertError } from "../errors/mongo";
 import { getAllStudents, getAllProfessors } from "../../mongo/queries/users";
 import { BadRequestError, UnauthorizedError } from "../errors/user";
-import { checkIfCodeMatches, resendEmailAuthCode, sendEmailAuthCode } from "../../mongo/queries/code";
+import { checkIfCodeMatches, resendEmailAuthCode, sendEmailAuthCode } from '../../mongo/queries/code';
 import { checkPasswordComplexity } from "../config/utils/password-complexity";
 import { ServerError } from "../errors/base";
 
@@ -86,8 +86,8 @@ router.post(
         );
         res.json({ message: "User created successfully", result });
       } else {
-        res.json({ message: "username already exists" });
         throw new MongoInsertError("User already exists");
+        res.json({ message: "username already exists" });
       }
     } catch (err) {
       next(err);
@@ -110,8 +110,8 @@ router.post("/login", async (req: Request, res: Response, next: NextFunction) =>
         console.log(req.session.Me);
         res.json({message: "Login successful", Me: req.session.Me.role});
       } else {
-        res.json({message: "Password is incorrect"});
         throw new Error("Password is incorrect");
+        res.json({message: "Password is incorrect"});
       }
     }
   } catch (err) {
@@ -160,73 +160,84 @@ router.get('/professors', isLoggedIn, isProfessor, async (req: Request, res: Res
 //send code to user to reset their password
 router.post('/sendcode', async (req: Request, res: Response, next: NextFunction) => {
   try {
-      let username = req.body.username.toString();
-      let email = req.body.email.toString();
-      let userId = await (await getUserbyUsername(username))._id;
-
-      let me = new Me();
-      me.username = username;
-      req.session.Me = me; 
-
-      let sendCode = await sendEmailAuthCode(userId.toString(),email);
-      if (sendCode){
-        res.json({message:'You code was successfully sent'})
-
+      let email = req.body.email?.toString();
+      let user = (await getUserbyEmail(email));
+      if (email && user){
+      if (user.email == email){
+        let sendCode = await sendEmailAuthCode(user._id.toString(),email);
+        if (sendCode){
+          res.json({message:'You code was successfully sent', userId: user._id});
+        } else {
+          throw new Error("Could not send code");
+          res.json({message: "Could not send code"});
+        }
       } else {
-        res.json({message: "Could not send code"});
-        throw new Error("Could not send code");
+        throw new Error("Email does not match our database");
+        res.json({message: "Email does not match our database"});
       }
-
-      
-
+    } else {
+      throw new Error("Invalid information");
+      res.json({message: "Invalid information"});
+    }
   } catch (err) {
       next(err);
   }
 });
+
 //compare code from databse to what the user entered to reset their password
 router.post('/comparecode', async (req: Request, res: Response, next: NextFunction) => {
   try {
-      const me = req.session.Me;
-      let code = req.body.code.toString();
+      let code = req.body.code?.toString();
+      let userId = req.body.userId?.toString();
 
-      if (me) {
-        let userId = await (await getUserbyUsername(me.username))._id;
-
-          let codeMatches = await checkIfCodeMatches(userId.toString(), code);
+      if (userId && code) {
+          let codeMatches = await checkIfCodeMatches(userId, code);
           if (codeMatches) {
+            let user = await getUserbyId(userId);
+            let me = new Me();
+            me.username = user.username;
+            me.role = user.role;
+            req.session.Me = me;
             res.json({message: "Your code matches"});
             //can then change password
 
           } else {
-              throw new Error("That code is not correct");
+            throw new Error("That code is not correct");
+            res.json({message: "The code is not correct"});
           }
       } else {
-          throw new UnauthorizedError(`You are not authorized`);
+        throw new Error("Invalid information");
+        res.json({message: "Invalid information"});
       }
-
   } catch (err) {
       next(err);
   }
 });
+
 //resend code to user to reset their password if they never received it
 router.post('/resendcode', async (req: Request, res: Response, next: NextFunction) => {
   try {
-      const me = req.session.Me;
-      let userId = req.body.userId?.toString();
-      let email = req.body.email?.toString();
+    let email = req.body.email.toString();
+    if (email){
 
-      if (me) {
-          let sendCode = await resendEmailAuthCode(userId,email);
+        let user = await getUserbyEmail(email);
+        if (email == user.email){
+
+          let sendCode = await resendEmailAuthCode(user._id.toString(),email);
           if (sendCode){
             res.json({message:'You code was successfully resent'})
 
           } else {
-            res.json({message: "Could not resend code"});
             throw new Error("Could not resend code");
+            res.json({message: "Could not resend code"});
           }
-
+        }else {
+          throw new Error("Your email doesn't match our database");
+          res.json({message: "Your email doesn't match our database"});
+        }
       } else {
-          throw new UnauthorizedError(`You are not authorized`);
+        throw new Error("Invalid information");
+        res.json({message: "Invalid information"});
       }
   } catch (err) {
       next(err);
@@ -248,21 +259,20 @@ router.post("/resetPassword", async (req: Request, res: Response, next: NextFunc
           if (update){
             res.json({message:'You successfully reset your password'})
           } else{
-            res.json({message: "Something went wrong with reseting your password"});
             throw new Error("Something went wrong with reseting your password");
+            res.json({message: "Something went wrong with reseting your password"});
           }}
           else{
+            throw new Error("Password is not complex enough");
             res.json({message:"Your password doesn't meet the requirements"})
-            throw new Error("Password isn't complex enough");
-
-
           }
         } else {
+          throw new Error("Passwords do not match");
           res.json({message: "Your passwords don't match"});
-          throw new Error("Passwords don't match");
         }
     } else{ 
       throw new UnauthorizedError(`You are not authorized`);
+      res.json({message: "You are not authorized"});
     }
   } catch (err) {
     next(err);
@@ -273,34 +283,36 @@ router.post('/changepassword', isLoggedIn, async (req: Request, res: Response, n
   try {
       const me = req.session.Me;
       const oldPassword = req.body.oldPassword.toString();
-      const newPassword = req.body.newPassword.toString();
+      const newPassword1 = req.body.newPassword1.toString();
       const newPassword2 = req.body.newpassword2.toString();
       if (me) {
-          if (newPassword == newPassword2) {
-              let complexity = await checkPasswordComplexity(newPassword)
+          if (newPassword1 == newPassword2) {
+              let complexity = await checkPasswordComplexity(newPassword1)
               if (complexity) {
                 let userId = (await getUserbyUsername(me.username))._id;
-                let insertPassword = await changePassword(me.username,userId.toString(), oldPassword,newPassword);
+                let insertPassword = await changePassword(me.username,userId.toString(), oldPassword,newPassword1);
                 if (insertPassword) {
                     req.session.destroy((err) => { });
                     res.json( "Your password is changed." );
                 } else {
                     throw new ServerError(`Something went wrong when changing password`);
-                }
-                                        
+                    res.json({message: "Something went wrong when changing password`"});
+                }                                     
               } else {
                   throw new BadRequestError("The password doesn't meet the requirements");
+                  res.json({message: "The password doesn't meet the requirements"});
               }
           } else {
               throw new BadRequestError("The passwords don't match");
+              res.json({message: "The passwords don't match"});
           }
         } else {
         throw new UnauthorizedError(`You are not authorized`);
+        res.json({message: "You are not authorized"});
           }
   } catch (err) {
       next(err);
   }
 });
-
 
 export default router;

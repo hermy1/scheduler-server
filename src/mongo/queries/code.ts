@@ -9,42 +9,33 @@ export const checkIfCodeExists = async (userId: string): Promise<boolean> => {
             let db = await getDB();
             const collection = await db.collection<Code>('codes');
             const results = await collection.findOne({ userId: ensureObjectId(userId) });
-
             if (results) {
                 resolve(true);
-
             } else {
                 resolve(false);
             }
-
-
         } catch (err: any) {
             reject(err);
         }
     });
 };
-
 
 export const checkExistingCode = async (userId: string): Promise<Code> => {
     return new Promise(async (resolve, reject) => {
         try {
             let db = await getDB();
             const collection = await db.collection<Code>('codes');
-
-            const results = await collection.findOne({ userId: ensureObjectId(userId) });
-
+            const results = await collection.findOne({ userId:ensureObjectId(userId) });
             if (results) {
                 resolve(results);
             } else {
-                throw new MongoFindError(`Could not find information for the user: ${userId}`);
+                reject(new MongoFindError(`Something went wrong while finding code for user: ${userId}`));
             }
-
         } catch (err: any) {
             reject(err);
         }
     });
 };
-
 
 export const checkIfCodeExistsForUser = async (userId: string): Promise<boolean> => {
     return new Promise(async (resolve, reject) => {
@@ -52,15 +43,11 @@ export const checkIfCodeExistsForUser = async (userId: string): Promise<boolean>
             let db = await getDB();
             const collection = await db.collection<Code>('codes');
             const results = await collection.findOne({ userId:ensureObjectId(userId) });
-
             if (results) {
                 resolve(true);
-
             } else {
                 resolve(false);
             }
-
-
         } catch (err: any) {
             reject(err);
         }
@@ -73,10 +60,8 @@ export const checkIfCodeMatches = async (userId: string, code: string): Promise<
             let db = await getDB();
             const collection = await db.collection<Code>('codes');
             const results = await collection.findOne({ userId: ensureObjectId(userId), code:code });
-
             if (results) {
                 resolve(true);
-
             } else {
                 resolve(false);
             }
@@ -85,6 +70,7 @@ export const checkIfCodeMatches = async (userId: string, code: string): Promise<
         }
     });
 };
+
 export const sendEmailAuthCode = async (userId: string, email: string): Promise<boolean> => {
     return new Promise(async (resolve, reject) => {
         try {
@@ -96,11 +82,11 @@ export const sendEmailAuthCode = async (userId: string, email: string): Promise<
                     resolve(true);         
                     }
                     else {
-                        resolve(false);
+                    resolve(false);
                     } 
             } else {
                 resolve(false);
-        }
+             }
         } catch (err: any) {
             reject(err);
         }
@@ -118,7 +104,6 @@ export const resendEmailAuthCode = async (userId: string, email: string): Promis
              else {
                 resolve(false);
             }
-
         } catch (err: any) {
             reject(err);
         }

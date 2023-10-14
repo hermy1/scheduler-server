@@ -1,4 +1,4 @@
-import { getDB } from "../../core/config/utils/mongohelper";
+import { ensureObjectId, getDB } from "../../core/config/utils/mongohelper";
 import { User,UserRole } from "../../models/user";
 import { MongoFindError } from "../../core/errors/mongo";
 
@@ -23,6 +23,35 @@ export const getUserbyUsername = async (username: string): Promise<User> => {
       const collection = db.collection<User>("users");
       const result = await collection.findOne({ username: username });
       if(result && result.username && result.username.length > 0){
+        resolve(result);
+      } else {
+        reject(new MongoFindError("User not found"));
+      }
+    } catch (err) {}
+  })
+};
+export const getUserbyEmail = async (email: string): Promise<User> => {
+  return new Promise (async (resolve,reject) => {
+    try {
+      let db = await getDB();
+      const collection = db.collection<User>("users");
+      const result = await collection.findOne({ email: email });
+      if(result && result.email && result.email.length > 0){
+        resolve(result);
+      } else {
+        reject(new MongoFindError("User not found"));
+      }
+    } catch (err) {}
+  })
+};
+
+export const getUserbyId = async (userId: string): Promise<User> => {
+  return new Promise (async (resolve,reject) => {
+    try {
+      let db = await getDB();
+      const collection = db.collection<User>("users");
+      const result = await collection.findOne({ _id: ensureObjectId(userId) });
+      if(result){
         resolve(result);
       } else {
         reject(new MongoFindError("User not found"));

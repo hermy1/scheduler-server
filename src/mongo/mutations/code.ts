@@ -11,7 +11,6 @@ export const createAuthCode = async (): Promise<string> => {
             var num: number = 0;
             var num_string = "";
             for (let i = 0; i < 6; i++) {
-
                 num = Math.floor(Math.random() * 10);
                 num_string = num.toString();
                 code = code + num;
@@ -28,7 +27,6 @@ export const insertNewCode = async (userId: string, code: string): Promise<boole
         try {
             let db = await getDB();
             const collection = await db.collection<Code>('codes');
-
             if (await checkIfCodeExists(userId)) {
                 await removeExistingCode(userId);
             }
@@ -42,7 +40,6 @@ export const insertNewCode = async (userId: string, code: string): Promise<boole
             } else {
                 reject(new MongoInsertError(`Something went wrong while inserting a new code for user: ${userId}`));
             }
-
         } catch (err: any) {
             reject(err);
         }
@@ -54,14 +51,12 @@ export const removeExistingCode = async (userId: string): Promise<boolean> => {
         try {
             let db = await getDB();
             const collection = await db.collection<Code>('codes');
-
             const results = await collection.deleteOne({ userId : ensureObjectId(userId) });
             if (results.deletedCount > 0) {
                 resolve(true);
             } else {
                 reject(new UnauthorizedError("Your session expired"));
             }
-
         } catch (err: any) {
             reject(err);
         }

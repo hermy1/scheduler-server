@@ -1,8 +1,8 @@
-import { ObjectId } from "mongodb";
+import { compareSync, genSaltSync, hashSync } from "bcrypt";
 import { ensureObjectId, getDB } from "../../core/config/utils/mongohelper";
 import { MongoFindError, MongoInsertError, MongoUpdateError } from "../../core/errors/mongo";
-import { User, UserRole } from "../../models/user";
-import { compareSync, genSaltSync, hashSync } from "bcrypt";
+import { User } from "../../models/user";
+import { UserRole } from "../../models/user";
 import { getUserbyUsername } from "../queries/users";
 
 export const insertNewUser = async (
@@ -23,7 +23,7 @@ export const insertNewUser = async (
   const user = new User();
   user.username = username;
   user.password = password;
-  user.role = role;
+  user.role = role as UserRole;
   user.email = email;
   user.major = major;
   user.minor = minor;
