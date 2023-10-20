@@ -18,7 +18,9 @@ export interface Appointment {
     _id: ObjectId;
     student: ObjectId;
     professor: ObjectId;
-    date: Date;
+    startDateTime: Date;
+    endDateTime: Date;
+    advisor: boolean;
     status: AppointmentStatus;
     reason?: string; // message or reason for appointment
     location?: string; // office location

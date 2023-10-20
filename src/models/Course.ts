@@ -1,7 +1,10 @@
 //classes model 
 import { ObjectId } from "mongodb";
+/*
+ This collection will represent the Courses that professors can add students to.
+ class name is not used because of the name conflict with the class keyword in javascript
+*/
 
-//class not used because of the name conflict with the class keyword
 export interface Course {
     _id: ObjectId;
     courseCode: string;
