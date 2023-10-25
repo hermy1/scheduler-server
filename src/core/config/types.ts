@@ -9,4 +9,12 @@ export interface Config {
   server: { secret: string,
     mongoConnect: string
    };
+   mail: {
+    sender: string,
+    host: string,
+    port: number,
+    user: string,
+    pass: string,
+    subject_text:string,
+}
 }
