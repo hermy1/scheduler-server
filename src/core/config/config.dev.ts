@@ -10,6 +10,27 @@ const config: Config = {
         password: process.env.DB_PASSWORD || '',
         database: process.env.DB_DATABASE || ''
     },
+    logging: {
+        levels:{
+            emerg: 0,
+            alert: 1, 
+            error: 2,
+            warning: 3,
+            info: 4,
+            debug: 5
+        },
+        colors: {
+            emerg: "stikethrough gray",
+            alert: "gray",
+            error: "red",
+            wanring: "yellow",
+            info: "blue",
+            debug: "cyan"
+        },
+        silent: false,
+        level: "emerg",
+        file: ""
+    },
     server: {
         secret: process.env.SECRET || '',
         mongoConnect: `mongodb://${process.env.MONGO_USER}:${process.env.MONGO_PASS}@${process.env.MONGO_HOST}:${process.env.MONGO_PORT}/${process.env.MONGO_DATABASE}`
