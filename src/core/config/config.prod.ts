@@ -11,6 +11,14 @@ const config: Config = {
     server: {
         secret: process.env.SECRET || '',
         mongoConnect: `mongodb://${process.env.MONGO_HOST}:${process.env.MONGO_PORT}/${process.env.MONGO_DATABASE}`
+    },
+    mail: {
+        sender: process.env.MAIL_SENDER ?? '',
+        host: process.env.MAIL_HOST ?? '',
+        port: parseInt(String(process.env.MAIL_PORT), 10) ?? 0,
+        user: process.env.MAIL_USER ?? '',
+        pass: process.env.MAIL_PASS ?? '',
+        subject_text: "Auth Code"
     }
 }
 

@@ -1,4 +1,5 @@
 import { ensureObjectId, getDB } from "../../core/config/utils/mongohelper";
+import { resendMailAuthCode, sendMailAuthCode } from "../../core/config/utils/sendCode";
 import { MongoFindError, MongoInsertError } from "../../core/errors/mongo";
 import { Code } from "../../models/code";
 import { createAuthCode, insertNewCode } from "../mutations/code";
@@ -78,8 +79,12 @@ export const sendEmailAuthCode = async (userId: string, email: string): Promise<
             if (code) {
                 var insertCodeToDatabase = await insertNewCode(userId, code);
                 if (insertCodeToDatabase) { 
-                    //send code to user here         
-                    resolve(true);         
+                    let sendEmail = await sendMailAuthCode(userId, email);//send code by email
+                    if (sendEmail){
+                        resolve(true);         
+                    } else {
+                        resolve(false);
+                    }
                     }
                     else {
                     resolve(false);
@@ -98,8 +103,13 @@ export const resendEmailAuthCode = async (userId: string, email: string): Promis
         try {
             let currentCode = await checkExistingCode(userId);
             if (currentCode) {
-                //resend code to user here
-                resolve(true);
+                let resendCode = await resendMailAuthCode(userId,email);
+                if (resendCode){
+                    resolve(true);
+
+                } else {
+                    resolve(false);
+                }
             }
              else {
                 resolve(false);
