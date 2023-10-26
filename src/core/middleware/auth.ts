@@ -10,6 +10,7 @@ export const isLoggedIn = async (req: Request, res: Response, next: NextFunction
         if (me && me.username && me.username.length > 0) {
             next();
         } else {
+            res.json ('Unauthorized')
             throw new UnauthorizedError("Unauthorized");
         }
     } catch (err) {
@@ -30,6 +31,7 @@ export const isStudent = async (req: Request, res: Response, next: NextFunction)
         if (me && me.role === UserRole.Student) {
             next();
         } else {
+            res.json ('Unauthorized')
             throw new UnauthorizedError("Unauthorized");
         }
     } catch (err) {
@@ -49,6 +51,7 @@ export const isProfessor = async (req: Request, res: Response, next: NextFunctio
         if (me && me.role === UserRole.Professor) {
             next();
         } else {
+            res.json ('Unauthorized')
             throw new UnauthorizedError("Unauthorized");
         }
     } catch (err) {
