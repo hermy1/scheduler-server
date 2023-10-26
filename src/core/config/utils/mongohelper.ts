@@ -14,7 +14,7 @@ export const getDB = async (): Promise<Db> => {
 };
 
 // ensure object id
-export const ensureObjectId = (id: string): ObjectId => {
+export const ensureObjectId = (id: string | ObjectId): ObjectId => {
   if (typeof id === "string") {
     return new ObjectId(id);
   }

@@ -1,7 +1,7 @@
 import express, { Request, Response, NextFunction, Router } from "express";
 import { Me } from "../../models/me";
 import { isLoggedIn, isProfessor, isStudent } from "../middleware/auth";
-import { checkIfUserExists, getUserbyEmail, getUserbyId, getUserbyUsername } from "../../mongo/queries/users";
+import { checkIfUserExists, getUpcomingMeetings, getUserbyEmail, getUserbyId, getUserbyUsername } from "../../mongo/queries/users";
 import { changePassword, insertNewUser, resetPassword } from "../../mongo/mutations/users";
 import bycrpt, { genSaltSync, hashSync } from "bcrypt";
 import { User, UserRole } from "../../models/user";
@@ -11,6 +11,9 @@ import { BadRequestError, UnauthorizedError } from "../errors/user";
 import { checkIfCodeMatches, resendEmailAuthCode, sendEmailAuthCode } from '../../mongo/queries/code';
 import { checkPasswordComplexity } from "../config/utils/password-complexity";
 import { ServerError } from "../errors/base";
+import { ensureObjectId } from "../config/utils/mongohelper";
+import { AppointmentStatus } from "../../models/appointment";
+import { ObjectId } from "mongodb";
 
 const router: Router = express.Router();
 //test route
@@ -316,3 +319,19 @@ router.post('/changepassword', isLoggedIn, async (req: Request, res: Response, n
 });
 
 export default router;
+
+
+//fetch all upcoming meetings
+router.get('/upcoming', isLoggedIn, isStudent, async(req:Request, res:Response, next: NextFunction)=>{
+  try {
+    const student = req.session.Me ? req.session.Me._id: null;
+    
+    const status = AppointmentStatus.Accepted;
+    if(student){
+      const meetings = await getUpcomingMeetings(ensureObjectId(student), status);
+    res.json(meetings);
+  }
+  } catch (err) {
+    next(err);
+  }
+});

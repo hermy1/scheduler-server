@@ -18,7 +18,7 @@ export interface Appointment {
     _id: ObjectId;
     student: ObjectId;
     professor: ObjectId;
-    date: Date;
+    date: Date; //new ISODate()
     status: AppointmentStatus;
     reason?: string; // message or reason for appointment
     location?: string; // office location
