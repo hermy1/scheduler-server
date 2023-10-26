@@ -8,9 +8,13 @@ import session from "express-session";
 import userRoutes from "./core/routes/user";
 import professorRoutes from "./core/routes/professor";
 import MongoStore from "connect-mongo";
+import winston from "winston";
+import { logger } from "./core/config/utils/logger";
+
 
 interface MainOptions {
   port: number;
+  env: string
 }
 
 //express session
@@ -24,6 +28,11 @@ declare module "express-session" {
 export async function main(options: MainOptions) {
   try {
     const app = express();
+    if(options.env === "development"){
+      winston.addColors(config.logging.colors)
+    }else{
+      logger.add(new winston.transports.File({filename: config.logging.file, level:config.logging.level}))
+    }
     //Mongo store for session in db
     const mongoStore = MongoStore.create({
       mongoUrl: config.server.mongoConnect,
@@ -63,8 +72,10 @@ export async function main(options: MainOptions) {
 
 if (require.main === module) {
   const PORT = 7000;
-  main({ port: PORT })
+  const ENV = process.env.NODE_ENV ?? "development"
+  main({ port: PORT, env: ENV })
     .then(() => {
+      logger.log({level: "debug", message: "The server started successfully"})
       console.log(`Server is running at http://localhost:${PORT}`);
     })
     .catch((err) => {
