@@ -1,6 +1,8 @@
 import { ensureObjectId, getDB } from "../../core/config/utils/mongohelper";
 import { User,UserRole } from "../../models/user";
 import { MongoFindError } from "../../core/errors/mongo";
+import { Appointment, AppointmentStatus } from "../../models/appointment";
+import { AggregationCursor, FindCursor, ObjectId, WithId } from "mongodb";
 
 //get all users, ignore this for now
 // export const getAllUsers = async (): Promise<User[]> => {
@@ -106,3 +108,36 @@ export const getAllProfessors = async (): Promise<User[]> => {
   });
 };
 
+// Assuming that 'Appointment' and 'User' have compatible structures
+export const getUpcomingMeetings = async (student: ObjectId, status: AppointmentStatus): Promise<Appointment[]> => {
+  try {
+    const db = await getDB();
+    const collection = db.collection<User>('users');
+    const pipeline = [
+      {
+        $match: { _id: student },
+      },
+      {
+        $lookup: {
+          from: 'appointment',
+          let: { id: "$_id" },
+          pipeline: [
+            // checking for student appointment & status accepted
+            //TODO: only show appointments with future dates
+            {$match:{ $and: [{$expr: { $eq: ['$student', '$$id'] }}, {$expr: {$eq: ['$status', status]}} ]} },
+          ],
+          as: 'appointment',
+        },
+      },
+      {
+        $unwind: { path: '$appointment', preserveNullAndEmptyArrays: false },
+      },
+    ];
+    
+    const result: AggregationCursor<Appointment> = collection.aggregate(pipeline);
+    const appointmentArray: Appointment[] = await result.toArray();
+    return appointmentArray;
+  } catch (err) {
+    throw err; 
+  }
+};
