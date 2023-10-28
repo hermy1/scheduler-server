@@ -316,12 +316,21 @@ export default router;
 //fetch all upcoming meetings
 router.get('/upcoming', isLoggedIn, isStudent, async(req:Request, res:Response, next: NextFunction)=>{
   try {
-    const student = req.session.Me ? req.session.Me._id: null;
-    
-    const status = AppointmentStatus.Accepted;
-    if(student){
-      const meetings = await getUpcomingMeetings(ensureObjectId(student), status);
+    const me = req.session.Me;
+    if (me){
+      let studentId = (await getUserbyUsername(me.username))._id;
+      const status = AppointmentStatus.Accepted;
+    if(studentId){
+      const meetings = await getUpcomingMeetings(ensureObjectId(studentId), status);
     res.json(meetings);
+    } else {
+      res.json({message: "Something went wrong when getting upcoming meetings"});
+      throw new BadRequestError("Something went wrong when getting upcoming meetings");
+    } 
+    
+  } else {
+    res.json({message: "You are not authorized"});
+    throw new UnauthorizedError(`You are not authorized`);
   }
   } catch (err) {
     next(err);

@@ -119,7 +119,7 @@ export const getUpcomingMeetings = async (student: ObjectId, status: Appointment
       },
       {
         $lookup: {
-          from: 'appointment',
+          from: 'appointments',
           let: { id: "$_id" },
           pipeline: [
             // checking for student appointment & status accepted
