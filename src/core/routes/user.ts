@@ -89,8 +89,8 @@ router.post(
         );
         res.json({ message: "User created successfully", result });
       } else {
-        throw new MongoInsertError("User already exists");
         res.json({ message: "username already exists" });
+        throw new MongoInsertError("User already exists");
       }
     } catch (err) {
       next(err);
@@ -113,8 +113,8 @@ router.post("/login", async (req: Request, res: Response, next: NextFunction) =>
         console.log(req.session.Me);
         res.json({message: "Login successful", Me: req.session.Me.role});
       } else {
-        throw new Error("Password is incorrect");
         res.json({message: "Password is incorrect"});
+        throw new Error("Password is incorrect");
       }
     }
   } catch (err) {
@@ -150,15 +150,7 @@ router.get('/students', isLoggedIn, isProfessor, async (req: Request, res: Respo
   }
 });
 
-//get all professors
-router.get('/professors', isLoggedIn, isProfessor, async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const professors = await getAllProfessors();
-    res.json(professors);
-  } catch (err) {
-    next(err);
-  }
-});
+
 
 //send code to user to reset their password
 router.post('/sendcode', async (req: Request, res: Response, next: NextFunction) => {
@@ -171,16 +163,16 @@ router.post('/sendcode', async (req: Request, res: Response, next: NextFunction)
         if (sendCode){
           res.json({message:'You code was successfully sent', userId: user._id});
         } else {
-          throw new Error("Could not send code");
           res.json({message: "Could not send code"});
+          throw new Error("Could not send code");
         }
       } else {
-        throw new Error("Email does not match our database");
         res.json({message: "Email does not match our database"});
+        throw new Error("Email does not match our database");
       }
     } else {
-      throw new Error("Invalid information");
       res.json({message: "Invalid information"});
+      throw new Error("Invalid information");
     }
   } catch (err) {
       next(err);
@@ -205,12 +197,12 @@ router.post('/comparecode', async (req: Request, res: Response, next: NextFuncti
             //can then change password
 
           } else {
-            throw new Error("That code is not correct");
             res.json({message: "The code is not correct"});
+            throw new Error("That code is not correct");
           }
       } else {
-        throw new Error("Invalid information");
         res.json({message: "Invalid information"});
+        throw new Error("Invalid information");
       }
   } catch (err) {
       next(err);
@@ -231,16 +223,16 @@ router.post('/resendcode', async (req: Request, res: Response, next: NextFunctio
             res.json({message:'You code was successfully resent'})
 
           } else {
-            throw new Error("Could not resend code");
             res.json({message: "Could not resend code"});
+            throw new Error("Could not resend code");
           }
         }else {
-          throw new Error("Your email doesn't match our database");
           res.json({message: "Your email doesn't match our database"});
+          throw new Error("Your email doesn't match our database");
         }
       } else {
-        throw new Error("Invalid information");
         res.json({message: "Invalid information"});
+        throw new Error("Invalid information");
       }
   } catch (err) {
       next(err);
@@ -262,20 +254,20 @@ router.post("/resetPassword", async (req: Request, res: Response, next: NextFunc
           if (update){
             res.json({message:'You successfully reset your password'})
           } else{
-            throw new Error("Something went wrong with reseting your password");
             res.json({message: "Something went wrong with reseting your password"});
+            throw new Error("Something went wrong with reseting your password");
           }}
           else{
-            throw new Error("Password is not complex enough");
             res.json({message:"Your password doesn't meet the requirements"})
+            throw new Error("Password is not complex enough");
           }
         } else {
-          throw new Error("Passwords do not match");
           res.json({message: "Your passwords don't match"});
+          throw new Error("Passwords do not match");
         }
     } else{ 
-      throw new UnauthorizedError(`You are not authorized`);
       res.json({message: "You are not authorized"});
+      throw new UnauthorizedError(`You are not authorized`);
     }
   } catch (err) {
     next(err);
@@ -298,20 +290,20 @@ router.post('/changepassword', isLoggedIn, async (req: Request, res: Response, n
                     req.session.destroy((err) => { });
                     res.json( "Your password is changed." );
                 } else {
-                    throw new ServerError(`Something went wrong when changing password`);
-                    res.json({message: "Something went wrong when changing password`"});
+                  res.json({message: "Something went wrong when changing password`"});
+                  throw new ServerError(`Something went wrong when changing password`);
                 }                                     
               } else {
-                  throw new BadRequestError("The password doesn't meet the requirements");
-                  res.json({message: "The password doesn't meet the requirements"});
+                res.json({message: "The password doesn't meet the requirements"});
+                throw new BadRequestError("The password doesn't meet the requirements");
               }
           } else {
-              throw new BadRequestError("The passwords don't match");
-              res.json({message: "The passwords don't match"});
+            res.json({message: "The passwords don't match"});
+            throw new BadRequestError("The passwords don't match");
           }
         } else {
-        throw new UnauthorizedError(`You are not authorized`);
-        res.json({message: "You are not authorized"});
+          res.json({message: "You are not authorized"});
+          throw new UnauthorizedError(`You are not authorized`);
           }
   } catch (err) {
       next(err);
