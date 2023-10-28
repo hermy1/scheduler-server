@@ -11,6 +11,7 @@ import { BadRequestError, UnauthorizedError } from "../errors/user";
 import { checkIfCodeMatches, resendEmailAuthCode, sendEmailAuthCode } from '../../mongo/queries/code';
 import { checkPasswordComplexity } from "../config/utils/password-complexity";
 import { ServerError } from "../errors/base";
+import { cancelAppointment, createAppointment } from "../../mongo/mutations/appointment";
 
 const router: Router = express.Router();
 //test route
@@ -306,5 +307,106 @@ router.post('/changepassword', isLoggedIn, async (req: Request, res: Response, n
       next(err);
   }
 });
+
+router.post('/createAppointment', isLoggedIn, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+      const me = req.session.Me;
+      const professorId = req.body.professorId.toString();
+      const startTime = req.body.startTime.toString();
+      const endTime = req.body.endTime.toString();
+      const advisor = req.body.advisor.toString();
+      let guestId:string="";
+      if (req.body.guestId){
+        guestId = req.body.guestId.toString();
+      } else {
+        guestId = ""
+      }
+      let reason:string="";
+      if (req.body.reason){
+        reason = req.body.reason.toString();
+      } else {
+        reason = ""
+      }
+
+
+
+      if (me) {
+        let userId = await (await getUserbyUsername(me?.username))._id;
+
+          if (professorId && startTime && endTime && advisor) {
+            let createAppointent = await createAppointment(userId.toString(),professorId,startTime,endTime,advisor,reason,guestId);
+              if (createAppointent){
+                res.json(createAppointent);
+              } else {
+                res.json({message: "Something went wrong when creating a new appointment"});
+                throw new BadRequestError("Something went wrong when creating a new appointment")
+              }
+        } else {
+          res.json({message: "Please send up all the information"});
+          throw new BadRequestError("Please send up all the information")
+        }
+      }
+        else {
+          res.json({message: "You are not authorized"});
+          throw new UnauthorizedError(`You are not authorized`);
+          }
+  } catch (err) {
+      next(err);
+  }
+});
+
+router.post('/resendcode', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    let email = req.body.email.toString();
+    if (email){
+
+        let user = await getUserbyEmail(email);
+        if (email == user.email){
+
+          let sendCode = await resendEmailAuthCode(user._id.toString(),email);
+          if (sendCode){
+            res.json({message:'You code was successfully resent'})
+
+          } else {
+            res.json({message: "Could not resend code"});
+            throw new Error("Could not resend code");
+          }
+        }else {
+          res.json({message: "Your email doesn't match our database"});
+          throw new Error("Your email doesn't match our database");
+        }
+      } else {
+        res.json({message: "Invalid information"});
+        throw new Error("Invalid information");
+      }
+  } catch (err) {
+      next(err);
+  }
+});
+
+router.post("/cancelAppointment", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const me = req.session.Me;
+    let appointmentId = req.body.appointmentId.toString();
+    console.log(appointmentId);
+ 
+    if (me){
+       let cancelApt = await cancelAppointment(appointmentId);
+       if (cancelApt){
+        res.json({message: "Your appointment was successfully cancelled"});
+       } else {
+        res.json({message: "Something went wrong when cancelling your appointment"});
+        throw new BadRequestError(`Something went wrong when cancelling your appointment`);
+       }
+       
+    } else{ 
+      res.json({message: "You are not authorized"});
+      throw new UnauthorizedError(`You are not authorized`);
+    }
+  } catch (err) {
+    next(err);
+  }
+});
+
 
 export default router;
