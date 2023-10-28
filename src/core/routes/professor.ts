@@ -3,8 +3,9 @@ import express, { Request, Response, NextFunction, Router } from "express";
 import { Me } from "../../models/me";
 import { isLoggedIn, isProfessor, isStudent } from "../middleware/auth";
 import { checkIfUserExists, getAllProfessors, getUserbyUsername } from "../../mongo/queries/users";
-import { insertNewCourse } from "../../mongo/mutations/professor";
+import { insertNewCourse, insertStudentCourse } from "../../mongo/mutations/professor";
 import { UnauthorizedError } from "../errors/user";
+import { ensureObjectId } from "../config/utils/mongohelper";
 
 
 const router: Router = express.Router();
@@ -43,5 +44,26 @@ router.get('/professors', isLoggedIn, isProfessor, async (req: Request, res: Res
       next(err);
     }
   });
+  
 //add student to course
+router.post('/add-student', isLoggedIn, isProfessor, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      let me = req.session.Me;
+      if (me && me.username && me.username.length > 0) {
+        const user = await getUserbyUsername(me.username);
+        if (user) {
+          const courseId = req.body.courseId;
+          const studentId = req.body.studentId;
+          const course = await insertStudentCourse(ensureObjectId(courseId), ensureObjectId(studentId));
+          res.json(course);
+        } else {
+          throw new UnauthorizedError("Unauthorized");
+        }
+      } else {
+        throw new UnauthorizedError("Unauthorized");
+      }
+    } catch (err) {
+      next(err);
+    }
+});
 export default router;

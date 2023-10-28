@@ -1,7 +1,7 @@
 import express, { Request, Response, NextFunction, Router } from "express";
 import { Me } from "../../models/me";
 import { isLoggedIn, isProfessor, isStudent } from "../middleware/auth";
-import { checkIfUserExists, getUserbyEmail, getUserbyId, getUserbyUsername } from "../../mongo/queries/users";
+import { checkIfUserExists, getUpcomingMeetings, getUserbyEmail, getUserbyId, getUserbyUsername } from "../../mongo/queries/users";
 import { changePassword, insertNewUser, resetPassword } from "../../mongo/mutations/users";
 import bycrpt, { genSaltSync, hashSync } from "bcrypt";
 import { User, UserRole } from "../../models/user";
@@ -12,6 +12,9 @@ import { checkIfCodeMatches, resendEmailAuthCode, sendEmailAuthCode } from '../.
 import { checkPasswordComplexity } from "../config/utils/password-complexity";
 import { ServerError } from "../errors/base";
 import { cancelAppointment, createAppointment } from "../../mongo/mutations/appointment";
+import { ensureObjectId } from "../config/utils/mongohelper";
+import { AppointmentStatus } from "../../models/appointment";
+import { ObjectId } from "mongodb";
 
 const router: Router = express.Router();
 //test route
@@ -410,3 +413,28 @@ router.post("/cancelAppointment", async (req: Request, res: Response, next: Next
 
 
 export default router;
+
+
+//fetch all upcoming meetings
+router.get('/upcoming', isLoggedIn, isStudent, async(req:Request, res:Response, next: NextFunction)=>{
+  try {
+    const me = req.session.Me;
+    if (me){
+      let studentId = (await getUserbyUsername(me.username))._id;
+      const status = AppointmentStatus.Accepted;
+    if(studentId){
+      const meetings = await getUpcomingMeetings(ensureObjectId(studentId), status);
+    res.json(meetings);
+    } else {
+      res.json({message: "Something went wrong when getting upcoming meetings"});
+      throw new BadRequestError("Something went wrong when getting upcoming meetings");
+    } 
+    
+  } else {
+    res.json({message: "You are not authorized"});
+    throw new UnauthorizedError(`You are not authorized`);
+  }
+  } catch (err) {
+    next(err);
+  }
+});
