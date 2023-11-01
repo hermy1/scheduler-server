@@ -75,12 +75,13 @@ export const cancelAppointment = async (appointmentId: string): Promise<boolean>
         try {
             let db = await getDB();
             const collection = await db.collection<Appointment>('appointments');
-            let deletedApt = collection.deleteOne({'_id':ensureObjectId(appointmentId)});
+            let deletedApt = collection.updateOne({'_id':ensureObjectId(appointmentId)}, { $set:{studentCancelled: true}});
   
-            if ((await deletedApt).deletedCount>0) {
+            if ((await deletedApt).modifiedCount>0) {
                 resolve(true)
             } else {
-                reject(new MongoInsertError(`Something went wrong while deleteing appointment`));
+                console.log(deletedApt);
+                reject(new MongoInsertError(`Something went wrong while updating your appointment to cancelled`));
             }
         } catch (err: any) {
             reject(err);
