@@ -8,25 +8,24 @@ export enum AppointmentStatus {
 }
 
 //guest professor
-export interface Guest {
-    _id: ObjectId;
-    name?: string;
-    email?: string;
+export class Guest {
+    _id: ObjectId = new ObjectId();
+
 }
 
-export interface Appointment {
-    _id: ObjectId;
-    student: ObjectId;
-    professor: ObjectId;
-    startDateTime: Date;
-    endDateTime: Date;
-    advisor: boolean;
-    status: AppointmentStatus;
-    reason?: string; // message or reason for appointment
-    location?: string; // office location
-    guest?: Guest; // guest professor 
-    secondaryStatus?: Appointment; // guest professor response
-    description?: string; // short description/summary of the appointment
-    createdAt: Date;
-    updatedAt: Date;
+export class Appointment {
+    _id: ObjectId = new ObjectId();
+    student: ObjectId = new ObjectId();
+    professor: ObjectId = new ObjectId();
+    startDateTime: Date = new Date();
+    endDateTime: Date = new Date();
+    advisor: boolean = false;
+    status: AppointmentStatus = AppointmentStatus.Pending;
+    reason?: string = ""; // message or reason for appointment
+    location?: string = ""; // office location
+    guest?: Guest = new Guest(); // guest professor 
+    secondaryStatus?: AppointmentStatus | string = ""; // guest professor response
+    summary?: string = ""; // short description/summary of the appointment
+    createdAt: Date = new Date();
+    updatedAt: Date = new Date();
 }
