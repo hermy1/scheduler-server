@@ -109,7 +109,7 @@ export const getAllProfessors = async (): Promise<User[]> => {
   });
 };
 
-export const getProfessorbyProfesserId = async (professorId: ObjectId): Promise<Advisor> => {
+export const getAdvisorbyProfesserId = async (professorId: ObjectId): Promise<Advisor> => {
   return new Promise (async (resolve,reject) => {
     try {
       let db = await getDB();
@@ -119,6 +119,20 @@ export const getProfessorbyProfesserId = async (professorId: ObjectId): Promise<
         resolve(result);
       } else {
         reject(new MongoFindError("Professor Not Found"));
+      }
+    } catch (err) {}
+  })
+};
+export const AdvisorbyProfesserId = async (professorId: ObjectId): Promise<boolean> => {
+  return new Promise (async (resolve,reject) => {
+    try {
+      let db = await getDB();
+      const collection = db.collection<Advisor>("advisors");
+      const result = await collection.findOne({ professorId: professorId });
+      if(result){
+        resolve(true);
+      } else {
+        resolve(false);
       }
     } catch (err) {}
   })

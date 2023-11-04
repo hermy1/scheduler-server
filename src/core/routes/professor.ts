@@ -73,7 +73,7 @@ router.post('/add-student-to-advisor', isLoggedIn, isProfessor, async (req: Requ
     let me = req.session.Me;
     if (me && me.username && me.username.length > 0) {
         const studentId = req.body.studentId;
-        const professorId = req.body.professorId
+        let professorId = (await getUserbyUsername(me.username))._id;
         const addStudent = await addStudentToAdvisor(ensureObjectId(professorId), ensureObjectId(studentId));
         res.json(addStudent);
     } else {
