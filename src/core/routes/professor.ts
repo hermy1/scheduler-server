@@ -3,7 +3,7 @@ import express, { Request, Response, NextFunction, Router } from "express";
 import { Me } from "../../models/me";
 import { isLoggedIn, isProfessor, isStudent } from "../middleware/auth";
 import { checkIfUserExists, getAllProfessors, getUserbyUsername } from "../../mongo/queries/users";
-import { insertNewCourse, insertStudentCourse } from "../../mongo/mutations/professor";
+import { addStudentToAdvisor, insertNewCourse, insertStudentCourse } from "../../mongo/mutations/professor";
 import { UnauthorizedError } from "../errors/user";
 import { ensureObjectId } from "../config/utils/mongohelper";
 
@@ -66,4 +66,22 @@ router.post('/add-student', isLoggedIn, isProfessor, async (req: Request, res: R
       next(err);
     }
 });
+
+
+router.post('/add-student-to-advisor', isLoggedIn, isProfessor, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    let me = req.session.Me;
+    if (me && me.username && me.username.length > 0) {
+        const studentId = req.body.studentId;
+        const professorId = req.body.professorId
+        const addStudent = await addStudentToAdvisor(ensureObjectId(professorId), ensureObjectId(studentId));
+        res.json(addStudent);
+    } else {
+      throw new UnauthorizedError("Unauthorized");
+    }
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;

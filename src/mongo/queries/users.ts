@@ -2,6 +2,7 @@ import { ensureObjectId, getDB } from "../../core/config/utils/mongohelper";
 import { User,UserRole } from "../../models/user";
 import { MongoFindError } from "../../core/errors/mongo";
 import { Appointment, AppointmentStatus } from "../../models/appointment";
+import { Advisor } from "../../models/advisor";
 import { AggregationCursor, FindCursor, ObjectId, WithId } from "mongodb";
 
 //get all users, ignore this for now
@@ -106,6 +107,21 @@ export const getAllProfessors = async (): Promise<User[]> => {
       reject(err);
     }
   });
+};
+
+export const getProfessorbyProfesserId = async (professorId: ObjectId): Promise<Advisor> => {
+  return new Promise (async (resolve,reject) => {
+    try {
+      let db = await getDB();
+      const collection = db.collection<Advisor>("advisors");
+      const result = await collection.findOne({ professorId: professorId });
+      if(result){
+        resolve(result);
+      } else {
+        reject(new MongoFindError("Professor Not Found"));
+      }
+    } catch (err) {}
+  })
 };
 
 // Assuming that 'Appointment' and 'User' have compatible structures

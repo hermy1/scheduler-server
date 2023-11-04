@@ -3,6 +3,8 @@ import { ensureObjectId, getDB } from "../../core/config/utils/mongohelper";
 import { MongoFindError, MongoInsertError, MongoUpdateError } from "../../core/errors/mongo";
 import {Course} from "../../models/Course";
 import { User } from "../../models/user";
+import { Advisor } from "../../models/advisor";
+import { getProfessorbyProfesserId } from "../queries/users";
 
 export const insertNewCourse = async (courseCode:string, courseName:string, courseDescription:string, courseDepartment:string, professorId:ObjectId): Promise <Course>  => {
     return new Promise (async (resolve,reject) => {
@@ -65,3 +67,36 @@ export const insertStudentCourse = async (courseId:ObjectId, studentId:ObjectId)
 
     })
 }
+
+export const addStudentToAdvisor = async (professorId: ObjectId, studentId: ObjectId) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const advisor = await getProfessorbyProfesserId(professorId);
+        if (advisor) {
+          let db = await getDB();
+          let advisorCollection = db.collection<Advisor>('advisors');
+          let userCollection = db.collection<User>('users');
+          const student = await userCollection.findOne({ _id: studentId });
+          if (student) {
+            advisor.students.push(student._id);
+            const result = await advisorCollection.updateOne(
+              { _id: advisor._id },
+              { $set: { students: advisor.students } }
+            );
+  
+            if (result.acknowledged) {
+              resolve(result);
+            } else {
+              throw new MongoInsertError("Error inserting student into Advisor list");
+            }
+          } else {
+            throw new MongoFindError('Student Not Found');
+          }
+        } else {
+          throw new MongoFindError('Advisor Not Found');
+        }
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
