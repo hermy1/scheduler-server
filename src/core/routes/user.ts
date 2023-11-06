@@ -124,14 +124,15 @@ router.post("/login", async (req: Request, res: Response, next: NextFunction) =>
 });
 
 //profile
-router.get(
+router.post(
   "/profile",
   isLoggedIn,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const me = req.session.Me;
       if (me) {
-        res.json(me);
+        let user = await getUserbyUsername(me.username);
+        res.json(user);
       } else {
         throw new Error("Unauthorized");
       }
