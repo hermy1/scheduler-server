@@ -437,7 +437,7 @@ router.get('/upcoming', isLoggedIn, isStudent, async(req:Request, res:Response, 
   }
 });
 
-router.post("/getProfessorsById", async (req: Request, res: Response, next: NextFunction) => {
+router.post("/getProfessorsById", isLoggedIn, isStudent, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const me = req.session.Me;
  
