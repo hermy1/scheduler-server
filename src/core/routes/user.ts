@@ -15,6 +15,7 @@ import { cancelAppointment, createAppointment } from "../../mongo/mutations/appo
 import { ensureObjectId } from "../config/utils/mongohelper";
 import { AppointmentStatus } from "../../models/appointment";
 import { ObjectId } from "mongodb";
+import { createNotification, readNotification } from "../../mongo/mutations/notification";
 
 const router: Router = express.Router();
 //test route
@@ -555,6 +556,54 @@ router.post("/getProfessorById", isLoggedIn, isStudent, async (req: Request, res
       res.json(professor);
      } else {
       res.json('Something went wrong and could not get a professor');
+     
+     }
+    } else{ 
+      res.json({message: "You are not authorized"});
+      throw new UnauthorizedError(`You are not authorized`);
+    }
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post("/createNotification", isLoggedIn, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const me = req.session.Me;
+    let userId = req.body.userId.toString();
+    let title = req.body.title.toString();
+    let description = req.body.description.toString();
+
+ 
+    if (me){
+      let notification = await createNotification(userId,title,description);
+      if (notification){
+      res.json(notification);
+     } else {
+      res.json('Something went wrong and could not create a notification');
+     
+     }
+    } else{ 
+      res.json({message: "You are not authorized"});
+      throw new UnauthorizedError(`You are not authorized`);
+    }
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post("/readNotification", isLoggedIn, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const me = req.session.Me;
+    let notificationId = req.body.notificationId.toString();
+
+ 
+    if (me){
+      let notification = await readNotification(notificationId);
+      if (notification){
+      res.json(notification);
+     } else {
+      res.json('Something went wrong and could not update a notification');
      
      }
     } else{ 
