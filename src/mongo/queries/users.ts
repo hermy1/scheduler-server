@@ -4,6 +4,7 @@ import { MongoFindError } from "../../core/errors/mongo";
 import { Appointment, AppointmentStatus } from "../../models/appointment";
 import { Advisor } from "../../models/advisor";
 import { AggregationCursor, FindCursor, ObjectId, WithId } from "mongodb";
+import { Course } from "../../models/Course";
 
 //get all users, ignore this for now
 // export const getAllUsers = async (): Promise<User[]> => {
@@ -170,6 +171,30 @@ export const getUpcomingMeetings = async (student: ObjectId, status: Appointment
   } catch (err) {
     throw err; 
   }
+};
+
+export const getProfessorsByUserId = async (id: ObjectId | string): Promise<string[]> => {
+  return new Promise (async (resolve,reject) => {
+    try {
+      let db = await getDB();
+      const collection = db.collection<Course>("courses");
+      const result = await collection.find({ students: ensureObjectId(id) }).toArray();
+      let professorList: string[] = [];
+      if (result) {
+        for (let i = 0; i < result.length; i++) {
+          let professor = result[i].professorId.toString();
+          if (!professorList.includes(professor)) {
+            professorList.push(professor);
+          }
+        }
+      
+      
+        resolve(professorList);
+      } else {
+        resolve([]);
+      }
+    } catch (err) {}
+  })
 };
 
 export const getAdvisorsByUserId = async (id: ObjectId | string): Promise<string[]> => {
