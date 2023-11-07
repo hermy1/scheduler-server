@@ -500,7 +500,7 @@ router.post("/getAdvisorsById", isLoggedIn, isStudent, async (req: Request, res:
     next(err);
   }
 });
-router.post("/getAdvisorsById", isLoggedIn, isStudent, async (req: Request, res: Response, next: NextFunction) => {
+router.get("/getAdvisorsById", isLoggedIn, isStudent, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const me = req.session.Me;
 
@@ -522,7 +522,7 @@ router.post("/getAdvisorsById", isLoggedIn, isStudent, async (req: Request, res:
   }
 });
 
-router.post("/getProfessorsById", isLoggedIn, isStudent, async (req: Request, res: Response, next: NextFunction) => {
+router.get("/getProfessorsById", isLoggedIn, isStudent, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const me = req.session.Me;
  
