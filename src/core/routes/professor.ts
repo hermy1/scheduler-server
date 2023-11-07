@@ -2,7 +2,7 @@
 import express, { Request, Response, NextFunction, Router } from "express";
 import { Me } from "../../models/me";
 import { isLoggedIn, isProfessor, isStudent } from "../middleware/auth";
-import { checkIfUserExists, getAllProfessors, getAllStudents, getUserbyUsername } from "../../mongo/queries/users";
+import { checkIfUserExists, getAggregates, getAllProfessors, getAllStudents, getUserbyUsername } from "../../mongo/queries/users";
 import { addStudentToAdvisor, insertNewCourse, insertStudentCourse } from "../../mongo/mutations/professor";
 import { BadRequestError, UnauthorizedError } from "../errors/user";
 import { ensureObjectId } from "../config/utils/mongohelper";
@@ -94,6 +94,26 @@ router.get('/allStudents', isLoggedIn, isProfessor, async(req:Request, res:Respo
         res.json({students: allStudents, count: count});
       } else {
         throw new BadRequestError("Something went wrong when getting all students");
+
+      }
+  } else {
+    res.json({message: "You are not authorized"});
+    throw new UnauthorizedError(`You are not authorized`);
+  }
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/aggregates', isLoggedIn, isProfessor, async(req:Request, res:Response, next: NextFunction)=>{
+  try {
+    const me = req.session.Me;
+    if (me){
+      let aggregates = await getAggregates();
+      if (aggregates){
+        res.json({aggregates});
+      } else {
+        throw new BadRequestError("Something went wrong when getting aggreagtes");
 
       }
   } else {

@@ -240,3 +240,29 @@ export const getAdvisorsByUserId = async (id: ObjectId | string): Promise<string
     } catch (err) {}
   })
 };
+
+export const getAggregates = async (): Promise<{
+  studentsCount: number;
+  classesCount: number;
+  professorsCount: number;
+  appointmentsCount: number;
+}> => {
+  try {
+    const db = await getDB();
+    const studentsCount = await db.collection<User>('users').countDocuments({ role: UserRole.Student });
+    const classesCount = await db.collection<Course>('courses').countDocuments();
+    const professorsCount = await db.collection<User>('users').countDocuments({ role: UserRole.Professor });
+    const appointmentsCount = await db.collection<Appointment>('appointments').countDocuments();
+
+    const results = {
+      studentsCount,
+      classesCount,
+      professorsCount,
+      appointmentsCount,
+    };
+
+    return results;
+  } catch (err) {
+    throw err;
+  }
+};
