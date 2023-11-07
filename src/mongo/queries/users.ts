@@ -174,7 +174,7 @@ export const getUpcomingMeetings = async (student: ObjectId, status: Appointment
   }
 };
 
-export const getProfessorsByUserId = async (id: ObjectId | string): Promise<string[]> => {
+export const getProfessorsByUserId = async (id: ObjectId | string): Promise<User[]> => {
   return new Promise (async (resolve,reject) => {
     try {
       let db = await getDB();
@@ -188,9 +188,13 @@ export const getProfessorsByUserId = async (id: ObjectId | string): Promise<stri
             professorList.push(professor);
           }
         }
+
+        const usersCollection = db.collection<User>('users');
+        const professors = await usersCollection.find({ _id: { $in: professorList.map(id => new ObjectId(id)) } }).toArray();
+
       
       
-        resolve(professorList);
+        resolve(professors);
       } else {
         resolve([]);
       }
@@ -219,7 +223,7 @@ export const getProfessorByUserId = async (professorId: ObjectId | string): Prom
   })
 };
 
-export const getAdvisorsByUserId = async (id: ObjectId | string): Promise<string[]> => {
+export const getAdvisorsByUserId = async (id: ObjectId | string): Promise<User[]> => {
   return new Promise (async (resolve,reject) => {
     try {
       let db = await getDB();
@@ -233,10 +237,84 @@ export const getAdvisorsByUserId = async (id: ObjectId | string): Promise<string
             AdvisorList.push(advisor);
           }
         }
-        resolve(AdvisorList);
+        
+        const usersCollection = db.collection<User>('users');
+        const professors = await usersCollection.find({ _id: { $in: AdvisorList.map(id => new ObjectId(id)) } }).toArray();
+
+        resolve(professors);
       } else {
         resolve([]);
       }
     } catch (err) {}
   })
 };
+export const getProfessorsAdvisorsByUserId = async (userId: ObjectId | string): Promise<User[]> => {
+  return new Promise (async (resolve,reject) => {
+    try {
+      let professors = await getProfessorsByUserId(ensureObjectId(userId));
+      let advisors = await getAdvisorsByUserId(ensureObjectId(userId));
+      let all : string[]=[];
+
+      professors.forEach((professor: string) => {
+        if (!all.includes(professor)) {
+          all.push(professor);
+        }
+      });
+      
+      advisors.forEach((advisor: string) => {
+        if (!all.includes(advisor)) {
+          all.push(advisor);
+        }
+      });
+      
+      if (all) {
+        let db=await getDB();
+        const usersCollection = db.collection<User>('users');
+        const allProfiles = await usersCollection.find({ _id: { $in: all.map(id => new ObjectId(id)) } }).toArray();
+
+      
+        resolve(allProfiles);
+      
+      } else {
+        reject(new MongoFindError("Professors and advisors Not Found"));
+      }
+    } catch (err) {    throw err; 
+    }
+  })
+};
+
+export const getProfessorsAdvisorsByUserIdButOne = async (userId: ObjectId | string, professorId:ObjectId|string): Promise<User[]> => {
+  return new Promise (async (resolve,reject) => {
+    try {
+      let professors = await getProfessorsByUserId(ensureObjectId(userId));
+      let advisors = await getAdvisorsByUserId(ensureObjectId(userId));
+      let all : string[]=[];
+
+      professors.forEach((professor: string) => {
+        if (!all.includes(professor)) {
+          all.push(professor);
+        }
+      });
+      
+      advisors.forEach((advisor: string) => {
+        if (!all.includes(advisor)) {
+          all.push(advisor);
+        }
+      });
+      all = all.filter(item => item !== professorId);
+      
+      if (all) {
+        let db=await getDB();
+        const usersCollection = db.collection<User>('users');
+        const allProfiles = await usersCollection.find({ _id: { $in: all.map(id => new ObjectId(id)) } }).toArray();
+
+      
+        resolve(allProfiles);
+      } else {
+        reject(new MongoFindError("Professors and advisors not Found"));
+      }
+    } catch (err) {    throw err; 
+    }
+  })
+};
+

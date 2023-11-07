@@ -1,7 +1,7 @@
 import express, { Request, Response, NextFunction, Router } from "express";
 import { Me } from "../../models/me";
 import { isLoggedIn, isProfessor, isStudent } from "../middleware/auth";
-import { checkIfUserExists, getProfessorByUserId, getProfessorsByUserId, getAdvisorsByUserId, getUpcomingMeetings, getUserbyEmail, getUserbyId, getUserbyUsername } from "../../mongo/queries/users";
+import { checkIfUserExists, getProfessorByUserId, getProfessorsByUserId, getAdvisorsByUserId, getUpcomingMeetings, getUserbyEmail, getUserbyId, getUserbyUsername, getProfessorsAdvisorsByUserId, getProfessorsAdvisorsByUserIdButOne } from "../../mongo/queries/users";
 import { changePassword, insertNewUser, resetPassword } from "../../mongo/mutations/users";
 import bycrpt, { genSaltSync, hashSync } from "bcrypt";
 import { User, UserRole } from "../../models/user";
@@ -501,7 +501,7 @@ router.post("/getAdvisorsById", isLoggedIn, isStudent, async (req: Request, res:
     next(err);
   }
 });
-router.post("/getAdvisorsById", isLoggedIn, isStudent, async (req: Request, res: Response, next: NextFunction) => {
+router.get("/getAdvisorsById", isLoggedIn, isStudent, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const me = req.session.Me;
 
@@ -523,7 +523,7 @@ router.post("/getAdvisorsById", isLoggedIn, isStudent, async (req: Request, res:
   }
 });
 
-router.post("/getProfessorsById", isLoggedIn, isStudent, async (req: Request, res: Response, next: NextFunction) => {
+router.get("/getProfessorsById", isLoggedIn, isStudent, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const me = req.session.Me;
  
@@ -581,6 +581,27 @@ router.post("/createNotification", isLoggedIn, async (req: Request, res: Respons
       res.json(notification);
      } else {
       res.json('Something went wrong and could not create a notification');
+            
+    } else{ 
+      res.json({message: "You are not authorized"});
+      throw new UnauthorizedError(`You are not authorized`);
+    }
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get("/getProfessorsAdvisors", isLoggedIn, isStudent, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const me = req.session.Me;
+ 
+    if (me){
+      let id = (await getUserbyUsername(me.username))._id;
+      let all = await getProfessorsAdvisorsByUserId(id);
+      if (all){
+      res.json(all);
+     } else {
+      res.json('Something went wrong when getting advisors and professors for student');
      
      }
     } else{ 
@@ -604,7 +625,28 @@ router.post("/readNotification", isLoggedIn, async (req: Request, res: Response,
       res.json(notification);
      } else {
       res.json('Something went wrong and could not update a notification');
-     
+     }
+    } else{ 
+      res.json({message: "You are not authorized"});
+      throw new UnauthorizedError(`You are not authorized`);
+    }
+  } catch (err) {
+    next(err);
+  }
+});
+       
+//get all professors but the id sent up
+router.post("/getProfessorsAdvisorsButOne", isLoggedIn, isStudent, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const me = req.session.Me;
+ let professorId = req.body.professorId.toString();
+    if (me){
+      let id = (await getUserbyUsername(me.username))._id;
+      let all = await getProfessorsAdvisorsByUserIdButOne(id,professorId);
+      if (all){
+      res.json(all);
+     } else {
+      res.json('Something went wrong when getting advisors and professors for student');     
      }
     } else{ 
       res.json({message: "You are not authorized"});
