@@ -1,7 +1,7 @@
 import express, { Request, Response, NextFunction, Router } from "express";
 import { Me } from "../../models/me";
 import { isLoggedIn, isProfessor, isStudent } from "../middleware/auth";
-import { checkIfUserExists, getUpcomingMeetings, getUserbyEmail, getUserbyId, getUserbyUsername } from "../../mongo/queries/users";
+import { checkIfUserExists, getProfessorsByUserId, getUpcomingMeetings, getUserbyEmail, getUserbyId, getUserbyUsername } from "../../mongo/queries/users";
 import { changePassword, insertNewUser, resetPassword } from "../../mongo/mutations/users";
 import bycrpt, { genSaltSync, hashSync } from "bcrypt";
 import { User, UserRole } from "../../models/user";
@@ -413,8 +413,6 @@ router.post("/cancelAppointment", async (req: Request, res: Response, next: Next
 });
 
 
-export default router;
-
 
 //fetch all upcoming meetings
 router.get('/upcoming', isLoggedIn, isStudent, async(req:Request, res:Response, next: NextFunction)=>{
@@ -439,3 +437,29 @@ router.get('/upcoming', isLoggedIn, isStudent, async(req:Request, res:Response, 
     next(err);
   }
 });
+
+router.post("/getProfessorsById", isLoggedIn, isStudent, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const me = req.session.Me;
+ 
+    if (me){
+      let id = (await getUserbyUsername(me.username))._id;
+     let professors = await getProfessorsByUserId(id);
+     if (professors){
+      res.json(professors);
+     } else {
+      res.json('Something went wrong and could not get your professors');
+     }
+       
+    } else{ 
+      res.json({message: "You are not authorized"});
+      throw new UnauthorizedError(`You are not authorized`);
+    }
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+
+export default router;
