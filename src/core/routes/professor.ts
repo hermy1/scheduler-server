@@ -2,9 +2,9 @@
 import express, { Request, Response, NextFunction, Router } from "express";
 import { Me } from "../../models/me";
 import { isLoggedIn, isProfessor, isStudent } from "../middleware/auth";
-import { checkIfUserExists, getAllProfessors, getUserbyUsername } from "../../mongo/queries/users";
+import { checkIfUserExists, getAllProfessors, getAllStudents, getUserbyUsername } from "../../mongo/queries/users";
 import { addStudentToAdvisor, insertNewCourse, insertStudentCourse } from "../../mongo/mutations/professor";
-import { UnauthorizedError } from "../errors/user";
+import { BadRequestError, UnauthorizedError } from "../errors/user";
 import { ensureObjectId } from "../config/utils/mongohelper";
 
 
@@ -79,6 +79,27 @@ router.post('/add-student-to-advisor', isLoggedIn, isProfessor, async (req: Requ
     } else {
       throw new UnauthorizedError("Unauthorized");
     }
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/allStudents', isLoggedIn, isProfessor, async(req:Request, res:Response, next: NextFunction)=>{
+  try {
+    const me = req.session.Me;
+    if (me){
+      let allStudents = await getAllStudents();
+      if (allStudents){
+        let count = allStudents.length;
+        res.json({students: allStudents, count: count});
+      } else {
+        throw new BadRequestError("Something went wrong when getting all students");
+
+      }
+  } else {
+    res.json({message: "You are not authorized"});
+    throw new UnauthorizedError(`You are not authorized`);
+  }
   } catch (err) {
     next(err);
   }

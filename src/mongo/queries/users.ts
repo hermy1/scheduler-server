@@ -95,6 +95,7 @@ export const getAllStudents = async (): Promise<User[]> => {
   })
 };
 
+
 //get all professors
 export const getAllProfessors = async (): Promise<User[]> => {
   return new Promise( async (resolve, reject) => {
