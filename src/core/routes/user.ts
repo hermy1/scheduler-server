@@ -1,7 +1,7 @@
 import express, { Request, Response, NextFunction, Router } from "express";
 import { Me } from "../../models/me";
 import { isLoggedIn, isProfessor, isStudent } from "../middleware/auth";
-import { checkIfUserExists, getUpcomingMeetings, getUserbyEmail, getUserbyId, getUserbyUsername } from "../../mongo/queries/users";
+import { checkIfUserExists, getAdvisorsByUserId, getUpcomingMeetings, getUserbyEmail, getUserbyId, getUserbyUsername } from "../../mongo/queries/users";
 import { changePassword, insertNewUser, resetPassword } from "../../mongo/mutations/users";
 import bycrpt, { genSaltSync, hashSync } from "bcrypt";
 import { User, UserRole } from "../../models/user";
@@ -435,6 +435,27 @@ router.get('/upcoming', isLoggedIn, isStudent, async(req:Request, res:Response, 
     res.json({message: "You are not authorized"});
     throw new UnauthorizedError(`You are not authorized`);
   }
+  } catch (err) {
+    next(err);
+  }
+});
+router.post("/getAdvisorsById", isLoggedIn, isStudent, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const me = req.session.Me;
+
+    if (me){
+      let id = (await getUserbyUsername(me.username))._id;
+     let professors = await getAdvisorsByUserId(id);
+     if (professors){
+      res.json(professors);
+     } else {
+      res.json('Something went wrong and could not get your advisors');
+     }
+
+    } else{ 
+      res.json({message: "You are not authorized"});
+      throw new UnauthorizedError(`You are not authorized`);
+    }
   } catch (err) {
     next(err);
   }
