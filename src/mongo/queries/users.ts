@@ -194,7 +194,28 @@ export const getProfessorsByUserId = async (id: ObjectId | string): Promise<stri
       } else {
         resolve([]);
       }
-    } catch (err) {}
+    } catch (err) {    throw err; 
+    }
+  })
+};
+
+export const getProfessorByUserId = async (professorId: ObjectId | string): Promise<User> => {
+  return new Promise (async (resolve,reject) => {
+    try {
+      let db = await getDB();
+      const collection = db.collection<User>("users");
+      const result = await collection.findOne({
+        _id: ensureObjectId(professorId),
+        role: UserRole.Professor
+      });      
+      if (result) {
+      
+        resolve(result);
+      } else {
+        reject(new MongoFindError("Professor Not Found"));
+      }
+    } catch (err) {    throw err; 
+    }
   })
 };
 
