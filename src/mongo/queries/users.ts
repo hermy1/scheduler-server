@@ -174,7 +174,7 @@ export const getUpcomingMeetings = async (student: ObjectId, status: Appointment
   }
 };
 
-export const getProfessorsByUserId = async (id: ObjectId | string): Promise<string[]> => {
+export const getProfessorsByUserId = async (id: ObjectId | string): Promise<User[]> => {
   return new Promise (async (resolve,reject) => {
     try {
       let db = await getDB();
@@ -188,9 +188,13 @@ export const getProfessorsByUserId = async (id: ObjectId | string): Promise<stri
             professorList.push(professor);
           }
         }
+
+        const usersCollection = db.collection<User>('users');
+        const professors = await usersCollection.find({ _id: { $in: professorList.map(id => new ObjectId(id)) } }).toArray();
+
       
       
-        resolve(professorList);
+        resolve(professors);
       } else {
         resolve([]);
       }
@@ -219,7 +223,7 @@ export const getProfessorByUserId = async (professorId: ObjectId | string): Prom
   })
 };
 
-export const getAdvisorsByUserId = async (id: ObjectId | string): Promise<string[]> => {
+export const getAdvisorsByUserId = async (id: ObjectId | string): Promise<User[]> => {
   return new Promise (async (resolve,reject) => {
     try {
       let db = await getDB();
@@ -233,7 +237,11 @@ export const getAdvisorsByUserId = async (id: ObjectId | string): Promise<string
             AdvisorList.push(advisor);
           }
         }
-        resolve(AdvisorList);
+        
+        const usersCollection = db.collection<User>('users');
+        const professors = await usersCollection.find({ _id: { $in: AdvisorList.map(id => new ObjectId(id)) } }).toArray();
+
+        resolve(professors);
       } else {
         resolve([]);
       }
