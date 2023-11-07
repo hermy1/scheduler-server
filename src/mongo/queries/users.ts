@@ -240,7 +240,7 @@ export const getAdvisorsByUserId = async (id: ObjectId | string): Promise<string
     } catch (err) {}
   })
 };
-export const getProfessorsAdvisorsByUserId = async (userId: ObjectId | string): Promise<string[]> => {
+export const getProfessorsAdvisorsByUserId = async (userId: ObjectId | string): Promise<User[]> => {
   return new Promise (async (resolve,reject) => {
     try {
       let professors = await getProfessorsByUserId(ensureObjectId(userId));
@@ -260,8 +260,13 @@ export const getProfessorsAdvisorsByUserId = async (userId: ObjectId | string): 
       });
       
       if (all) {
+        let db=await getDB();
+        const usersCollection = db.collection<User>('users');
+        const allProfiles = await usersCollection.find({ _id: { $in: all.map(id => new ObjectId(id)) } }).toArray();
+
       
-        resolve(all);
+        resolve(allProfiles);
+      
       } else {
         reject(new MongoFindError("Professors and advisors Not Found"));
       }
@@ -270,7 +275,7 @@ export const getProfessorsAdvisorsByUserId = async (userId: ObjectId | string): 
   })
 };
 
-export const getProfessorsAdvisorsByUserIdButOne = async (userId: ObjectId | string, professorId:ObjectId|string): Promise<string[]> => {
+export const getProfessorsAdvisorsByUserIdButOne = async (userId: ObjectId | string, professorId:ObjectId|string): Promise<User[]> => {
   return new Promise (async (resolve,reject) => {
     try {
       let professors = await getProfessorsByUserId(ensureObjectId(userId));
@@ -291,10 +296,14 @@ export const getProfessorsAdvisorsByUserIdButOne = async (userId: ObjectId | str
       all = all.filter(item => item !== professorId);
       
       if (all) {
+        let db=await getDB();
+        const usersCollection = db.collection<User>('users');
+        const allProfiles = await usersCollection.find({ _id: { $in: all.map(id => new ObjectId(id)) } }).toArray();
+
       
-        resolve(all);
+        resolve(allProfiles);
       } else {
-        reject(new MongoFindError("Professors and advisors Not Found"));
+        reject(new MongoFindError("Professors and advisors not Found"));
       }
     } catch (err) {    throw err; 
     }
