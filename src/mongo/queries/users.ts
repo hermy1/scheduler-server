@@ -197,3 +197,25 @@ export const getProfessorsByUserId = async (id: ObjectId | string): Promise<stri
     } catch (err) {}
   })
 };
+
+export const getAdvisorsByUserId = async (id: ObjectId | string): Promise<string[]> => {
+  return new Promise (async (resolve,reject) => {
+    try {
+      let db = await getDB();
+      const collection = db.collection<Advisor>("advisors");
+      const result = await collection.find({ students: ensureObjectId(id) }).toArray();
+      let AdvisorList: string[] = [];
+      if (result) {
+        for (let i = 0; i < result.length; i++) {
+          let advisor = result[i].professorId.toString();
+          if (!AdvisorList.includes(advisor)) {
+            AdvisorList.push(advisor);
+          }
+        }
+        resolve(AdvisorList);
+      } else {
+        resolve([]);
+      }
+    } catch (err) {}
+  })
+};
