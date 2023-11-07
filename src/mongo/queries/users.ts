@@ -240,3 +240,64 @@ export const getAdvisorsByUserId = async (id: ObjectId | string): Promise<string
     } catch (err) {}
   })
 };
+export const getProfessorsAdvisorsByUserId = async (userId: ObjectId | string): Promise<string[]> => {
+  return new Promise (async (resolve,reject) => {
+    try {
+      let professors = await getProfessorsByUserId(ensureObjectId(userId));
+      let advisors = await getAdvisorsByUserId(ensureObjectId(userId));
+      let all : string[]=[];
+
+      professors.forEach((professor: string) => {
+        if (!all.includes(professor)) {
+          all.push(professor);
+        }
+      });
+      
+      advisors.forEach((advisor: string) => {
+        if (!all.includes(advisor)) {
+          all.push(advisor);
+        }
+      });
+      
+      if (all) {
+      
+        resolve(all);
+      } else {
+        reject(new MongoFindError("Professors and advisors Not Found"));
+      }
+    } catch (err) {    throw err; 
+    }
+  })
+};
+
+export const getProfessorsAdvisorsByUserIdButOne = async (userId: ObjectId | string, professorId:ObjectId|string): Promise<string[]> => {
+  return new Promise (async (resolve,reject) => {
+    try {
+      let professors = await getProfessorsByUserId(ensureObjectId(userId));
+      let advisors = await getAdvisorsByUserId(ensureObjectId(userId));
+      let all : string[]=[];
+
+      professors.forEach((professor: string) => {
+        if (!all.includes(professor)) {
+          all.push(professor);
+        }
+      });
+      
+      advisors.forEach((advisor: string) => {
+        if (!all.includes(advisor)) {
+          all.push(advisor);
+        }
+      });
+      all = all.filter(item => item !== professorId);
+      
+      if (all) {
+      
+        resolve(all);
+      } else {
+        reject(new MongoFindError("Professors and advisors Not Found"));
+      }
+    } catch (err) {    throw err; 
+    }
+  })
+};
+
