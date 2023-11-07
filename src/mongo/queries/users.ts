@@ -240,3 +240,35 @@ export const getAdvisorsByUserId = async (id: ObjectId | string): Promise<string
     } catch (err) {}
   })
 };
+
+export const getProfessorsProfile = async (ids: string[]): Promise<User[]> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!Array.isArray(ids)) {
+        reject(new Error("ids should be an array"));
+        return;
+      }
+
+      let db = await getDB();
+      const collection = db.collection<User>("users");
+
+      const profiles: User[] = [];
+
+      await Promise.all(ids.map(async (userId:string) => {
+        console.log(userId);
+        const result = await collection.findOne({ _id: ensureObjectId(userId) });
+        if (result?._id) {
+          profiles.push(result);
+        }
+      }));
+
+      if (profiles.length > 0) {
+        resolve(profiles);
+      } else {
+        reject(new MongoFindError("No matching users found"));
+      }
+    } catch (err) {
+      reject(err);
+    }
+  });
+};

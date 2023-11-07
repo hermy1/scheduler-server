@@ -1,7 +1,7 @@
 import express, { Request, Response, NextFunction, Router } from "express";
 import { Me } from "../../models/me";
 import { isLoggedIn, isProfessor, isStudent } from "../middleware/auth";
-import { checkIfUserExists, getProfessorByUserId, getProfessorsByUserId, getAdvisorsByUserId, getUpcomingMeetings, getUserbyEmail, getUserbyId, getUserbyUsername } from "../../mongo/queries/users";
+import { checkIfUserExists, getProfessorByUserId, getProfessorsByUserId, getAdvisorsByUserId, getUpcomingMeetings, getUserbyEmail, getUserbyId, getUserbyUsername, getProfessorsProfile } from "../../mongo/queries/users";
 import { changePassword, insertNewUser, resetPassword } from "../../mongo/mutations/users";
 import bycrpt, { genSaltSync, hashSync } from "bcrypt";
 import { User, UserRole } from "../../models/user";
@@ -555,6 +555,32 @@ router.post("/getProfessorById", isLoggedIn, isStudent, async (req: Request, res
       res.json(professor);
      } else {
       res.json('Something went wrong and could not get a professor');
+     
+     }
+    } else{ 
+      res.json({message: "You are not authorized"});
+      throw new UnauthorizedError(`You are not authorized`);
+    }
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post("/getProfessorProfiles", isLoggedIn, isStudent, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const me = req.session.Me;
+    //string of professorIds seperated by commas
+    const professorIds = req.body.professorIds;
+    const professorIdList:string[] = professorIds.split(',');
+    console.log('dsad',professorIdList);
+    
+    
+    if (me){
+      let professors = await getProfessorsProfile(professorIdList);
+      if (professors){
+      res.json(professors);
+     } else {
+      res.json('Something went wrong and could not get professor profiles');
      
      }
     } else{ 
