@@ -281,13 +281,13 @@ export const getProfessorsAdvisorsByUserId = async (userId: ObjectId | string): 
       let advisors = await getAdvisorsByUserId(ensureObjectId(userId));
       let all : string[]=[];
 
-      professors.forEach((professor: string) => {
+      professors.forEach((professor: any) => {
         if (!all.includes(professor)) {
           all.push(professor);
         }
       });
       
-      advisors.forEach((advisor: string) => {
+      advisors.forEach((advisor: any) => {
         if (!all.includes(advisor)) {
           all.push(advisor);
         }
@@ -316,13 +316,13 @@ export const getProfessorsAdvisorsByUserIdButOne = async (userId: ObjectId | str
       let advisors = await getAdvisorsByUserId(ensureObjectId(userId));
       let all : string[]=[];
 
-      professors.forEach((professor: string) => {
+      professors.forEach((professor: any) => {
         if (!all.includes(professor)) {
           all.push(professor);
         }
       });
       
-      advisors.forEach((advisor: string) => {
+      advisors.forEach((advisor: any) => {
         if (!all.includes(advisor)) {
           all.push(advisor);
         }

@@ -16,6 +16,7 @@ import { ensureObjectId } from "../config/utils/mongohelper";
 import { AppointmentStatus } from "../../models/appointment";
 import { ObjectId } from "mongodb";
 import { createNotification, readNotification } from "../../mongo/mutations/notification";
+import { allNotifications, getNotification } from "../../mongo/queries/notification";
 
 const router: Router = express.Router();
 //test route
@@ -581,7 +582,7 @@ router.post("/createNotification", isLoggedIn, async (req: Request, res: Respons
       res.json(notification);
      } else {
       res.json('Something went wrong and could not create a notification');
-            
+     }
     } else{ 
       res.json({message: "You are not authorized"});
       throw new UnauthorizedError(`You are not authorized`);
@@ -647,6 +648,47 @@ router.post("/getProfessorsAdvisorsButOne", isLoggedIn, isStudent, async (req: R
       res.json(all);
      } else {
       res.json('Something went wrong when getting advisors and professors for student');     
+     }
+    } else{ 
+      res.json({message: "You are not authorized"});
+      throw new UnauthorizedError(`You are not authorized`);
+    }
+  } catch (err) {
+    next(err);
+  }
+});
+router.post("/notificationById", isLoggedIn, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const me = req.session.Me;
+    let notificationId = req.body.notificationId.toString();
+
+ 
+    if (me){
+      let notification = await getNotification(notificationId);
+      if (notification){
+      res.json(notification);
+     } else {
+      res.json('Something went wrong and could not get a notification');
+     }
+    } else{ 
+      res.json({message: "You are not authorized"});
+      throw new UnauthorizedError(`You are not authorized`);
+    }
+  } catch (err) {
+    next(err);
+  }
+});
+router.get("/notificationsForUser", isLoggedIn, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const me = req.session.Me;
+ 
+    if (me){
+      let id = (await getUserbyUsername(me.username))._id;
+      let notifications = await allNotifications(id);
+      if (notifications){
+      res.json(notifications);
+     } else {
+      res.json('Something went wrong and could not get notifications');
      }
     } else{ 
       res.json({message: "You are not authorized"});
