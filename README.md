@@ -81,14 +81,43 @@ To run the app with Docker, follow these additional steps:
 
 API instructions 
 
-## 🤝 Contributing
+## 🤝 Git Commands
 
-Before you commit, make sure pull changes from master and create a new branch
-for example. while on master run the following command
+Before you start follow this instructions:
+Step 1: Make sure you're on the master branch before you start your task.
+```bash
+git status
+```
+this should say something like you're: On branch master if you're not on master then do
+
+```bash
+git checkout master
+```
+
+Step: 2: Then run the following command:
+```bash
+git pull
+```
+This will pull the latest changes. Then you can do the following command to start your task:
  ```bash
 git checkout -b feature/authentication
  ```
  "feature/authentication" <<-- this would be your new branch to work on. after push it and add someone to review your code before it is merged to master branch.
+
+ Step 3: When you're done with your task.
+ ```bash
+git add .
+```
+
+ Step 4: Commit the changes
+ ```bash
+git commit -m "Brief description of your task"
+```
+
+ Step 3: When you're done with your task. Then push your branch.
+ ```bash
+git push feature/authentication 
+```
 
 ## 📄 License
 
