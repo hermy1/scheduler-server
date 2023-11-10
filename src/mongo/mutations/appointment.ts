@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import { ensureObjectId, getDB } from "../../core/config/utils/mongohelper";
 import { Appointment, AppointmentStatus, Guest } from "../../models/appointment";
-import { MongoInsertError } from "../../core/errors/mongo";
+import { MongoInsertError, MongoUpdateError, MongoFindError } from "../../core/errors/mongo";
 import { UserInAdvisor, UserInProfessorCourse } from "../queries/appointment";
 
 
@@ -88,3 +88,35 @@ export const cancelAppointment = async (appointmentId: string): Promise<boolean>
         }
     });
 };
+
+export const updateAppointmentStatusAndLocationById = async (appointmentId: ObjectId, appointmentStatus: AppointmentStatus, location: string): Promise<Appointment> => {
+    return new Promise( async (resolve, reject) => {
+        try{
+            let db = await getDB();
+            const appointmentsCollection =  db.collection<Appointment>('appointments')
+            const appointmentToBeUpdated = await appointmentsCollection.findOne({ _id: ensureObjectId(appointmentId)});
+
+            if(appointmentToBeUpdated){
+                let appointmentStatusUpdate = appointmentsCollection.updateOne({_id: ensureObjectId(appointmentId)}, {$set: {status: appointmentStatus, location: location}})
+
+                if((await appointmentStatusUpdate).modifiedCount > 0) {
+                    const updatedAppointment = await appointmentsCollection.findOne({ _id: ensureObjectId(appointmentId)});
+                    if (updatedAppointment) {
+                    resolve(updatedAppointment);
+                    } else {
+                        reject(new MongoUpdateError("Something went wrong while updating appointment status"))
+                    }
+
+                } else {
+                    reject(new MongoUpdateError("Nothing was updated"))
+                }
+
+            } else {
+                reject(new MongoFindError("Something went wrong when finding appointment by id"));
+            }
+
+        } catch (err) {
+            reject(err);
+        }
+    })
+}
