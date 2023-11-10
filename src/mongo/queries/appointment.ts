@@ -1,5 +1,5 @@
 import { ensureObjectId, getDB } from "../../core/config/utils/mongohelper";
-import { MongoInsertError } from "../../core/errors/mongo";
+import { MongoFindError, MongoInsertError } from "../../core/errors/mongo";
 import { Course } from "../../models/Course";
 import { Advisor } from "../../models/advisor";
 import { Appointment } from "../../models/appointment";
@@ -57,12 +57,12 @@ export const getAppointmentbyId = async (appId: string): Promise<Appointment> =>
     return new Promise(async (resolve, reject) => {
         try {
             let db = await getDB();
-            const collection = await db.collection<Appointment>('appointments')
-            const appointment = await collection.findOne({_id: ensureObjectId(appId)})
+            const collection = await db.collection<Appointment>('appointments');
+            const appointment = await collection.findOne({_id: ensureObjectId(appId)});
             if (appointment) {
                 resolve(appointment)
             }else {
-                reject(false)
+                reject(new MongoFindError('Could not find appointment for id'));
             }
         } catch (err: any) {
             reject(err)
