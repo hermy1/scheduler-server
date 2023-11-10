@@ -2,10 +2,11 @@
 import express, { Request, Response, NextFunction, Router } from "express";
 import { Me } from "../../models/me";
 import { isLoggedIn, isProfessor, isStudent } from "../middleware/auth";
-import { checkIfUserExists, getAggregates, getAllProfessors, getAllStudents, getUserbyUsername } from "../../mongo/queries/users";
+import { checkIfUserExists, getAggregates, getAllProfessors, getAllStudents, getAllStudentsInClassByClassId, getUserbyUsername } from "../../mongo/queries/users";
 import { addStudentToAdvisor, insertNewCourse, insertStudentCourse } from "../../mongo/mutations/professor";
 import { BadRequestError, UnauthorizedError } from "../errors/user";
 import { ensureObjectId } from "../config/utils/mongohelper";
+import { ObjectId } from "mongodb";
 
 
 const router: Router = express.Router();
@@ -124,5 +125,19 @@ router.get('/aggregates', isLoggedIn, isProfessor, async(req:Request, res:Respon
     next(err);
   }
 });
+
+router.get("/studentsInCourse", isLoggedIn, isProfessor, async(req: Request, res: Response, next: NextFunction) => {
+  try {
+    const courseId = req.body.courseId;
+    let students = await getAllStudentsInClassByClassId(courseId);
+    if(students) {
+      res.json(students);
+    } else {
+      throw new BadRequestError("Something went wrong when getting students in specified course");
+    }
+  } catch(err) {
+    next(err);
+  }
+})
 
 export default router;
