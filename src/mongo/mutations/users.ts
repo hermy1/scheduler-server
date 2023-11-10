@@ -3,7 +3,7 @@ import { ensureObjectId, getDB } from "../../core/config/utils/mongohelper";
 import { MongoFindError, MongoInsertError, MongoUpdateError } from "../../core/errors/mongo";
 import { User } from "../../models/user";
 import { UserRole } from "../../models/user";
-import { getUserbyUsername } from "../queries/users";
+import { getAllStudents, getUserbyUsername } from "../queries/users";
 
 export const insertNewUser = async (
   username: string,
@@ -16,7 +16,7 @@ export const insertNewUser = async (
   grade: string,
   gender: string,
   title: string,
-  birthdate: Date
+  birthdate: Date, avatar:string, firstName:string,lastName:string
 ): Promise<User> => {
   const db = await getDB();
   const collection = db.collection<User>("users");
@@ -31,6 +31,9 @@ export const insertNewUser = async (
   user.gender = gender;
   user.title = title;
   user.grade = grade;
+  user.avatar = avatar;
+  user.firstName = firstName;
+  user.lastName = lastName;
   user.birthdate = birthdate;
   user.createdAt = new Date();
   user.updatedAt = new Date();

@@ -54,7 +54,7 @@ router.post(
         title,
         grade,
         gender,
-        birthdate,
+        birthdate,firstName, lastName, avatar
       } = req.body;
 
       //check if user exists
@@ -75,6 +75,9 @@ router.post(
         newUser.grade = grade;
         newUser.gender = gender;
         newUser.birthdate = new Date(birthdate);
+        newUser.firstName = firstName;
+        newUser.lastName = lastName;
+        newUser.avatar = avatar;
         newUser.createdAt = new Date();
         newUser.updatedAt = new Date();
 
@@ -89,7 +92,8 @@ router.post(
           newUser.grade,
           newUser.gender,
           newUser.title,
-          newUser.birthdate
+          newUser.birthdate,
+          newUser.avatar, newUser.firstName,newUser.lastName
         );
         res.json({ message: "User created successfully", result });
       } else {
