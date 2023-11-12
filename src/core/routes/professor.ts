@@ -4,7 +4,7 @@ import { Me } from "../../models/me";
 import { isLoggedIn, isProfessor, isStudent } from "../middleware/auth";
 import { checkIfUserExists, getAggregates, getAllProfessors, getAllStudents, getUserbyUsername } from "../../mongo/queries/users";
 import { addStudentToAdvisor, insertNewCourse, insertStudentCourse, } from "../../mongo/mutations/professor";
-import { updateAppointmentStatusAndLocationById } from "../../mongo/mutations/appointment";
+import { addSummary, updateAppointmentStatusAndLocationById } from "../../mongo/mutations/appointment";
 import { BadRequestError, UnauthorizedError } from "../errors/user";
 import { ensureObjectId } from "../config/utils/mongohelper";
 import { AppointmentStatus } from "../../models/appointment";
@@ -153,6 +153,27 @@ router.post('/update-apointment-status', isLoggedIn, isProfessor, async(req:Requ
         } else {
             res.json({message: "Something went wrong when updating appointment"});
             throw new Error("Something went wrong when updating appointment");
+        };
+      };
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/addSummary', isLoggedIn, isProfessor, async(req:Request, res:Response, next: NextFunction) => {
+  try{
+    let me = req.session.Me;
+      if (me && me.username && me.username.length > 0) {
+        let appointmentId = req.body.appointmentId.toString();
+        let summary = req.body.summary.toString();
+
+
+        let add = await addSummary(appointmentId, summary);
+        if (add) {
+          res.json(add)
+        } else {
+            res.json({message: "Something went wrong when adding summary to appointment"});
+            throw new Error("Something went wrong when adding summary to appointment");
         };
       };
   } catch (err) {
