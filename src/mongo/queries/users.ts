@@ -348,15 +348,27 @@ export const getProfessorsAdvisorsByUserIdButOne = async (userId: ObjectId | str
   })
 };
 
-export const getAllStudentsInClassByClassId = async (classId: ObjectId | string): Promise<ObjectId[]> => {
+export const getAllStudentsInClassByClassId = async (classId: ObjectId | string): Promise<User[]> => {
   return new Promise(async (resolve, reject) => {
     try {
       const db = await getDB();
       const courseCollection = db.collection<Course>("courses");
       const course = await courseCollection.findOne({_id: ensureObjectId(classId)});
       if(course) {
-        const students = course.students;
-        resolve(students);
+        const studentIds = course.students;
+        const userCollection = db.collection<User>("users");
+        const students = [];
+        for(let i=0; i<studentIds.length; i++) {
+          const student = await userCollection.findOne({_id: studentIds[i]});
+          if(student) {
+            students[i] = student;
+          }
+        }
+
+        if(students) {
+          resolve(students);
+        }
+
 
       } else {
         reject(new MongoFindError("List of students for given course ID not found"));
