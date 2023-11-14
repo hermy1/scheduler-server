@@ -9,6 +9,12 @@ import { BadRequestError, UnauthorizedError } from "../errors/user";
 import { ensureObjectId } from "../config/utils/mongohelper";
 import { getAvailabilityById, getAvailabilityByProfessorId, getAvailabilityListByProfessorId } from "../../mongo/queries/availability";
 import { updateAvailability } from "../../mongo/mutations/availability";
+import { checkIfUserExists, getAggregates, getAllProfessors, getAllStudents, getUserbyUsername } from "../../mongo/queries/users";
+import { addStudentToAdvisor, insertNewCourse, insertStudentCourse, } from "../../mongo/mutations/professor";
+import { updateAppointmentStatusAndLocationById } from "../../mongo/mutations/appointment";
+import { BadRequestError, UnauthorizedError } from "../errors/user";
+import { ensureObjectId } from "../config/utils/mongohelper";
+import { AppointmentStatus } from "../../models/appointment";
 
 
 const router: Router = express.Router();
@@ -128,6 +134,39 @@ router.get('/aggregates', isLoggedIn, isProfessor, async(req:Request, res:Respon
   }
 });
 
+router.post('/update-apointment-status', isLoggedIn, isProfessor, async(req:Request, res:Response, next: NextFunction) => {
+  try{
+    let me = req.session.Me;
+      if (me && me.username && me.username.length > 0) {
+        let appointmentId = req.body.appointmentId;
+        let appointmentStatus = req.body.appointmentStatus;
+        let appointmentLocation = req.body.appointmentLocation;
+
+        let appointmentStatusEnum: AppointmentStatus;
+        switch (appointmentStatus) {
+          case AppointmentStatus.Pending:
+          case AppointmentStatus.Accepted:
+          case AppointmentStatus.Rejected:
+          case AppointmentStatus.Cancelled:
+            appointmentStatusEnum = appointmentStatus as AppointmentStatus;
+            break;
+          default:
+            throw new Error(`Invalid appointment status: ${appointmentStatus}`);
+        }  
+
+        let updatedAppointment = await updateAppointmentStatusAndLocationById(appointmentId, appointmentStatusEnum, appointmentLocation);
+        if (updatedAppointment) {
+          res.json({message: "Appointment Status Successfully Updated", appointment: updatedAppointment})
+        } else {
+            res.json({message: "Something went wrong when updating appointment"});
+            throw new Error("Something went wrong when updating appointment");
+        };
+      };
+  } catch (err) {
+    next(err);
+  }
+});
+
 //get my availability, by professor who is logged in
 router.get('/my-availability', isLoggedIn, isProfessor, async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -146,11 +185,11 @@ router.get('/my-availability', isLoggedIn, isProfessor, async (req: Request, res
         throw new UnauthorizedError("Unauthorized");
       }
     
-    }
-  } catch (err) {
+    } catch (err) {
     next(err);
   }
 });
+  
 //get availability for professor by Id (professorId)
 router.get('/availability/:id', isLoggedIn, isProfessor, async (req: Request, res: Response, next: NextFunction) => {
     try {
