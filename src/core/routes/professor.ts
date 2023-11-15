@@ -2,14 +2,13 @@
 import express, { Request, Response, NextFunction, Router } from "express";
 import { Me } from "../../models/me";
 import { isLoggedIn, isProfessor, isStudent } from "../middleware/auth";
-import { checkIfUserExists, getAdvisorbyProfesserId, getAggregates, getAllProfessors, getAllStudents, getUserbyUsername } from "../../mongo/queries/users";
+import { checkIfUserExists, getAdvisorbyProfesserId, getAggregates, getAllProfessors, getAllStudents, getAllStudentsInClassByClassId, getUserbyUsername } from "../../mongo/queries/users";
 import { addStudentToAdvisor, insertNewCourse, insertStudentCourse } from "../../mongo/mutations/professor";
 import { insertAvailability, deleteAvailability } from "../../mongo/mutations/availability";
 import { BadRequestError, UnauthorizedError } from "../errors/user";
 import { ensureObjectId } from "../config/utils/mongohelper";
 import { getAvailabilityById, getAvailabilityByProfessorId, getAvailabilityListByProfessorId } from "../../mongo/queries/availability";
 import { updateAvailability } from "../../mongo/mutations/availability";
-import { checkIfUserExists, getAggregates, getAllProfessors, getAllStudents, getUserbyUsername } from "../../mongo/queries/users";
 import { updateAppointmentStatusAndLocationById } from "../../mongo/mutations/appointment";
 import { ObjectId } from "mongodb";
 import { AppointmentStatus } from "../../models/appointment";
@@ -198,7 +197,7 @@ router.get('/my-availability', isLoggedIn, isProfessor, async (req: Request, res
         }
       } else {
         throw new UnauthorizedError("Unauthorized");
-      }
+      }}
     
     } catch (err) {
     next(err);
