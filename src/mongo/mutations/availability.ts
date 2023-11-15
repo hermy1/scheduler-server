@@ -46,7 +46,13 @@ import { MongoInsertError } from "../../core/errors/mongo";
           }
           let result = await availabilityCollection.updateOne({ _id: ensureObjectId(availability._id )}, updateQuery);
           if (result.acknowledged) {
-            resolve(availability);
+            //fetch updated availability
+           let updatedAvailabilty = await availabilityCollection.findOne({ _id: ensureObjectId(availability._id )});
+           if(updatedAvailabilty){
+            resolve(updatedAvailabilty);
+            } else {
+                throw new MongoInsertError("Something went wrong while updating availability");
+            }
           } else {
             throw new MongoInsertError("Something went wrong while updating availability");
           }
