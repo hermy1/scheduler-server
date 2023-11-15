@@ -120,3 +120,21 @@ export const updateAppointmentStatusAndLocationById = async (appointmentId: Obje
         }
     })
 }
+
+export const addSummary = async (appointmentId: string|ObjectId, summary:string): Promise<boolean> => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let db = await getDB();
+            const collection = await db.collection<Appointment>('appointments');
+            let addSum = await collection.updateOne({'_id':ensureObjectId(appointmentId)}, { $set:{summary: summary}});
+  
+            if (addSum.acknowledged) {
+                resolve(true)
+            } else {
+                reject(new MongoInsertError(`Something went wrong while adding summary to the appointment`));
+            }
+        } catch (err: any) {
+            reject(err);
+        }
+    });
+};
