@@ -6,6 +6,7 @@ import { User } from "../../models/user";
 import { Advisor } from "../../models/advisor";
 import { AdvisorbyProfesserId, getAdvisorbyProfesserId } from "../queries/users";
 
+
 export const insertNewCourse = async (courseCode:string, courseName:string, courseDescription:string, courseDepartment:string, professorId:ObjectId): Promise <Course>  => {
     return new Promise (async (resolve,reject) => {
         try {
