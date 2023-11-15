@@ -1,8 +1,10 @@
 import { ObjectId } from "mongodb";
 
+
 /*
  This collection will store professors' available time slots for appointments.
 */
+
 export class TimeSlot {
     startTIme: Date = new Date();
     endTime: Date = new Date();
