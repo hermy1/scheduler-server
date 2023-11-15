@@ -7,6 +7,8 @@ import { addStudentToAdvisor, insertNewCourse, insertStudentCourse } from "../..
 import { BadRequestError, UnauthorizedError } from "../errors/user";
 import { ensureObjectId } from "../config/utils/mongohelper";
 import { ObjectId } from "mongodb";
+import { updateAppointmentStatusAndLocationById } from "../../mongo/mutations/appointment";
+import { AppointmentStatus } from "../../models/appointment";
 
 
 const router: Router = express.Router();
@@ -143,5 +145,37 @@ router.get("/studentsInCourse", isLoggedIn, isProfessor, async (req: Request, re
     next(err);
   }
 })
+router.post('/update-apointment-status', isLoggedIn, isProfessor, async(req:Request, res:Response, next: NextFunction) => {
+  try{
+    let me = req.session.Me;
+      if (me && me.username && me.username.length > 0) {
+        let appointmentId = req.body.appointmentId;
+        let appointmentStatus = req.body.appointmentStatus;
+        let appointmentLocation = req.body.appointmentLocation;
+
+        let appointmentStatusEnum: AppointmentStatus;
+        switch (appointmentStatus) {
+          case AppointmentStatus.Pending:
+          case AppointmentStatus.Accepted:
+          case AppointmentStatus.Rejected:
+          case AppointmentStatus.Cancelled:
+            appointmentStatusEnum = appointmentStatus as AppointmentStatus;
+            break;
+          default:
+            throw new Error(`Invalid appointment status: ${appointmentStatus}`);
+        }  
+
+        let updatedAppointment = await updateAppointmentStatusAndLocationById(appointmentId, appointmentStatusEnum, appointmentLocation);
+        if (updatedAppointment) {
+          res.json({message: "Appointment Status Successfully Updated", appointment: updatedAppointment})
+        } else {
+            res.json({message: "Something went wrong when updating appointment"});
+            throw new Error("Something went wrong when updating appointment");
+        };
+      };
+  } catch (err) {
+    next(err);
+  }
+});
 
 export default router;

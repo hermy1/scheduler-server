@@ -18,6 +18,9 @@ export class User {
     title: string = '';
     grade: string = '';
     gender: string = '';
+    firstName: string = '';
+    lastName: string = '';
+    avatar: string = '';
     birthdate: Date = new Date();
     createdAt: Date = new Date();
     updatedAt: Date = new Date();
