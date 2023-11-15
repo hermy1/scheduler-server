@@ -9,7 +9,7 @@ import { BadRequestError, UnauthorizedError } from "../errors/user";
 import { ensureObjectId } from "../config/utils/mongohelper";
 import { getAvailabilityById, getAvailabilityByProfessorId, getAvailabilityListByProfessorId } from "../../mongo/queries/availability";
 import { updateAvailability } from "../../mongo/mutations/availability";
-
+ 
 
 const router: Router = express.Router();
 
