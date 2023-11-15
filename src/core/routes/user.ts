@@ -12,6 +12,7 @@ import { checkIfCodeMatches, resendEmailAuthCode, sendEmailAuthCode } from '../.
 import { checkPasswordComplexity } from "../config/utils/password-complexity";
 import { ServerError } from "../errors/base";
 import { cancelAppointment, createAppointment } from "../../mongo/mutations/appointment";
+import { getAppointmentbyId } from "../../mongo/queries/appointment";
 import { ensureObjectId } from "../config/utils/mongohelper";
 import { AppointmentStatus } from "../../models/appointment";
 import { ObjectId } from "mongodb";
@@ -53,7 +54,7 @@ router.post(
         title,
         grade,
         gender,
-        birthdate,
+        birthdate,firstName, lastName, avatar
       } = req.body;
 
       //check if user exists
@@ -74,6 +75,9 @@ router.post(
         newUser.grade = grade;
         newUser.gender = gender;
         newUser.birthdate = new Date(birthdate);
+        newUser.firstName = firstName;
+        newUser.lastName = lastName;
+        newUser.avatar = avatar;
         newUser.createdAt = new Date();
         newUser.updatedAt = new Date();
 
@@ -88,7 +92,8 @@ router.post(
           newUser.grade,
           newUser.gender,
           newUser.title,
-          newUser.birthdate
+          newUser.birthdate,
+          newUser.avatar, newUser.firstName,newUser.lastName
         );
         res.json({ message: "User created successfully", result });
       } else {
@@ -699,6 +704,31 @@ router.get("/notificationsForUser", isLoggedIn, async (req: Request, res: Respon
   }
 });
 
+router.get("/getAppointmentbyId", isLoggedIn, async (req: Request, res: Response, next: NextFunction) => {
+  try{
+    let appId = req.query.id?.toString();
+    let me = req.session.Me;
+    if(me){
+          if (appId){
+            const getAppointment = await getAppointmentbyId(appId);
+              if (getAppointment){
+                res.json(getAppointment)
+          }else{
+            res.json('Something went wrong and could not retreieve the appointment');
+          }
 
+    }else{
+      res.json({message: "You did not send up an appointmentId"});
+      throw new BadRequestError(`You did not send up an appointmentId`);
+    } }
+    else{ 
+      res.json({message: "You are not authorized"});
+      throw new UnauthorizedError(`You are not authorized`);
+    
+    }
+  } catch (err){
+    next(err)
+  }
+})
 
 export default router;

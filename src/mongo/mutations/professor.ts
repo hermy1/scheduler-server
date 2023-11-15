@@ -70,79 +70,84 @@ export const insertStudentCourse = async (courseId:ObjectId, studentId:ObjectId)
 }
 
 export const addStudentToAdvisor = async (professorId: ObjectId, studentId: ObjectId) => {
-    return new Promise(async (resolve, reject) => {
-      try {
-        let isMatch = false;
+  return new Promise(async (resolve, reject) => {
+    try {
+      let isMatch = false;
 
-        const a = await AdvisorbyProfesserId(professorId);
-        if (a) {
-          let advisor = await getAdvisorbyProfesserId(professorId);
-          let db = await getDB();
-          let advisorCollection = db.collection<Advisor>('advisors');
-          let userCollection = db.collection<User>('users');
-          const student = await userCollection.findOne({ _id: studentId });
-          if (student) {
-            //check to make sure not in array already
-            console.log(advisor);
+      const advisor = await AdvisorbyProfesserId(professorId);
 
-          for (const student of advisor.students) {
-            if (student.equals(ensureObjectId(studentId))) {
-              console.log(studentId,ensureObjectId(studentId))
+      if (advisor) {
+        const existingAdvisor = await getAdvisorbyProfesserId(professorId);
+        let db = await getDB();
+        let advisorCollection = db.collection<Advisor>('advisors');
+        let userCollection = db.collection<User>('users');
+        const student = await userCollection.findOne({ _id: studentId });
+
+        if (student) {
+          // Check to make sure the student is not in the advisor's array already
+          for (const advStudentId of existingAdvisor.students) {
+            if (advStudentId.equals(studentId)) {
               isMatch = true;
               break; // Exit the loop early since a match is found
             }
           }
 
-      if (isMatch) {
-        resolve('Student is already in this advisor');
-      } else {      
-
-
-            advisor.students.push(student._id);
+          if (isMatch) {
+            resolve('Student is already in this advisor');
+          } else {
+            // Add the student to the advisor's array
+            existingAdvisor.students.push(student._id);
             const result = await advisorCollection.updateOne(
-              { _id: advisor._id },
-              { $set: { students: advisor.students } }
+              { _id: existingAdvisor._id },
+              { $set: { students: existingAdvisor.students } }
             );
-  
+
             if (result.acknowledged) {
               resolve(true);
             } else {
-              throw new MongoInsertError("Error inserting student into Advisor list");
+              throw new MongoInsertError('Error inserting student into Advisor list');
             }
           }
         } else {
-          //create advisor in table and continue
-          let createAdvisorInTable = await createAdvisorInAdvisorsTable(professorId);
-          if (createAdvisorInTable){
-            const advisor = await getAdvisorbyProfesserId(professorId);
-        if (advisor) {
+          throw new MongoFindError('Student Not Found');
+        }
+      } else {
+        // Create advisor in table and continue
+        let createAdvisorInTable = await createAdvisorInAdvisorsTable(professorId);
+
+        if (createAdvisorInTable) {
+          const advisor = await getAdvisorbyProfesserId(professorId);
+
+          if (advisor) {
             let db = await getDB();
             let advisorCollection = db.collection<Advisor>('advisors');
             let userCollection = db.collection<User>('users');
             const student = await userCollection.findOne({ _id: studentId });
+
             if (student) {
               advisor.students.push(student._id);
               const result = await advisorCollection.updateOne(
                 { _id: advisor._id },
                 { $set: { students: advisor.students } }
               );
-    
+
               if (result.acknowledged) {
-                resolve(result);
+                resolve(true);
               } else {
-                throw new MongoInsertError("Error inserting student into Advisor list");
+                throw new MongoInsertError('Error inserting student into Advisor list');
               }
             } else {
               throw new MongoFindError('Student Not Found');
             }
-
+          }
         }
-          }}}
-      } catch (err) {
-        reject(err);
       }
-    });
-  }
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
 
   export const createAdvisorInAdvisorsTable = async (professorId: ObjectId) => {
     return new Promise(async (resolve, reject) => {
