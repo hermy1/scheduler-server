@@ -1,5 +1,5 @@
 import { ensureObjectId, getDB } from "../../core/config/utils/mongohelper";
-import { User,UserRole } from "../../models/user";
+import { User, UserRole } from "../../models/user";
 import { MongoFindError } from "../../core/errors/mongo";
 import { Appointment, AppointmentStatus } from "../../models/appointment";
 import { Advisor } from "../../models/advisor";
@@ -21,46 +21,46 @@ import { Course } from "../../models/Course";
 //   };
 //get user by username
 export const getUserbyUsername = async (username: string): Promise<User> => {
-  return new Promise (async (resolve,reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       let db = await getDB();
       const collection = db.collection<User>("users");
       const result = await collection.findOne({ username: username });
-      if(result && result.username && result.username.length > 0){
+      if (result && result.username && result.username.length > 0) {
         resolve(result);
       } else {
         reject(new MongoFindError("User not found"));
       }
-    } catch (err) {}
+    } catch (err) { }
   })
 };
 export const getUserbyEmail = async (email: string): Promise<User> => {
-  return new Promise (async (resolve,reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       let db = await getDB();
       const collection = db.collection<User>("users");
       const result = await collection.findOne({ email: email });
-      if(result && result.email && result.email.length > 0){
+      if (result && result.email && result.email.length > 0) {
         resolve(result);
       } else {
         reject(new MongoFindError("User not found"));
       }
-    } catch (err) {}
+    } catch (err) { }
   })
 };
 
 export const getUserbyId = async (userId: string): Promise<User> => {
-  return new Promise (async (resolve,reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       let db = await getDB();
       const collection = db.collection<User>("users");
       const result = await collection.findOne({ _id: ensureObjectId(userId) });
-      if(result){
+      if (result) {
         resolve(result);
       } else {
         reject(new MongoFindError("User not found"));
       }
-    } catch (err) {}
+    } catch (err) { }
   })
 };
 
@@ -84,7 +84,7 @@ export const checkIfUserExists = async (username: string): Promise<boolean> => {
 
 //get all students
 export const getAllStudents = async (): Promise<User[]> => {
-  return new Promise(async (resolve, reject)=> {
+  return new Promise(async (resolve, reject) => {
     try {
       let db = await getDB();
       const collection = db.collection<User>("users");
@@ -99,7 +99,7 @@ export const getAllStudents = async (): Promise<User[]> => {
 
 //get all professors
 export const getAllProfessors = async (): Promise<User[]> => {
-  return new Promise( async (resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       let db = await getDB();
       const collection = db.collection<User>("users");
@@ -112,31 +112,31 @@ export const getAllProfessors = async (): Promise<User[]> => {
 };
 
 export const getAdvisorbyProfesserId = async (professorId: ObjectId): Promise<Advisor> => {
-  return new Promise (async (resolve,reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       let db = await getDB();
       const collection = db.collection<Advisor>("advisors");
       const result = await collection.findOne({ professorId: professorId });
-      if(result){
+      if (result) {
         resolve(result);
       } else {
         reject(new MongoFindError("Professor Not Found"));
       }
-    } catch (err) {}
+    } catch (err) { }
   })
 };
 export const AdvisorbyProfesserId = async (professorId: ObjectId): Promise<boolean> => {
-  return new Promise (async (resolve,reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       let db = await getDB();
       const collection = db.collection<Advisor>("advisors");
       const result = await collection.findOne({ professorId: professorId });
-      if(result){
+      if (result) {
         resolve(true);
       } else {
         resolve(false);
       }
-    } catch (err) {}
+    } catch (err) { }
   })
 };
 
@@ -156,7 +156,7 @@ export const getUpcomingMeetings = async (student: ObjectId, status: Appointment
           pipeline: [
             // checking for student appointment & status accepted
             //TODO: only show appointments with future dates
-            {$match:{ $and: [{$expr: { $eq: ['$student', '$$id'] }}, {$expr: {$eq: ['$status', status]}} ]} },
+            { $match: { $and: [{ $expr: { $eq: ['$student', '$$id'] } }, { $expr: { $eq: ['$status', status] } }] } },
           ],
           as: 'appointment',
         },
@@ -165,17 +165,17 @@ export const getUpcomingMeetings = async (student: ObjectId, status: Appointment
         $unwind: { path: '$appointment', preserveNullAndEmptyArrays: false },
       },
     ];
-    
+
     const result: AggregationCursor<Appointment> = collection.aggregate(pipeline);
     const appointmentArray: Appointment[] = await result.toArray();
     return appointmentArray;
   } catch (err) {
-    throw err; 
+    throw err;
   }
 };
 
 export const getProfessorsByUserId = async (id: ObjectId | string): Promise<User[]> => {
-  return new Promise (async (resolve,reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       let db = await getDB();
       const collection = db.collection<Course>("courses");
@@ -192,39 +192,41 @@ export const getProfessorsByUserId = async (id: ObjectId | string): Promise<User
         const usersCollection = db.collection<User>('users');
         const professors = await usersCollection.find({ _id: { $in: professorList.map(id => new ObjectId(id)) } }).toArray();
 
-      
-      
+
+
         resolve(professors);
       } else {
         resolve([]);
       }
-    } catch (err) {    throw err; 
+    } catch (err) {
+      throw err;
     }
   })
 };
 
 export const getProfessorByUserId = async (professorId: ObjectId | string): Promise<User> => {
-  return new Promise (async (resolve,reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       let db = await getDB();
       const collection = db.collection<User>("users");
       const result = await collection.findOne({
         _id: ensureObjectId(professorId),
         role: UserRole.Professor
-      });      
+      });
       if (result) {
-      
+
         resolve(result);
       } else {
         reject(new MongoFindError("Professor Not Found"));
       }
-    } catch (err) {    throw err; 
+    } catch (err) {
+      throw err;
     }
   })
 };
 
 export const getAdvisorsByUserId = async (id: ObjectId | string): Promise<User[]> => {
-  return new Promise (async (resolve,reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       let db = await getDB();
       const collection = db.collection<Advisor>("advisors");
@@ -237,7 +239,7 @@ export const getAdvisorsByUserId = async (id: ObjectId | string): Promise<User[]
             AdvisorList.push(advisor);
           }
         }
-        
+
         const usersCollection = db.collection<User>('users');
         const professors = await usersCollection.find({ _id: { $in: AdvisorList.map(id => new ObjectId(id)) } }).toArray();
 
@@ -245,7 +247,7 @@ export const getAdvisorsByUserId = async (id: ObjectId | string): Promise<User[]
       } else {
         resolve([]);
       }
-    } catch (err) {}
+    } catch (err) { }
   })
 };
 
@@ -275,72 +277,105 @@ export const getAggregates = async (): Promise<{
   }
 };
 export const getProfessorsAdvisorsByUserId = async (userId: ObjectId | string): Promise<User[]> => {
-  return new Promise (async (resolve,reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       let professors = await getProfessorsByUserId(ensureObjectId(userId));
       let advisors = await getAdvisorsByUserId(ensureObjectId(userId));
-      let all : string[]=[];
+      let all: string[] = [];
 
       professors.forEach((professor: any) => {
         if (!all.includes(professor)) {
           all.push(professor);
         }
       });
-      
+
       advisors.forEach((advisor: any) => {
         if (!all.includes(advisor)) {
           all.push(advisor);
         }
       });
-      
+
       if (all) {
-        let db=await getDB();
+        let db = await getDB();
         const usersCollection = db.collection<User>('users');
         const allProfiles = await usersCollection.find({ _id: { $in: all.map(id => new ObjectId(id)) } }).toArray();
 
-      
+
         resolve(allProfiles);
-      
+
       } else {
         reject(new MongoFindError("Professors and advisors Not Found"));
       }
-    } catch (err) {    throw err; 
+    } catch (err) {
+      throw err;
     }
   })
 };
 
-export const getProfessorsAdvisorsByUserIdButOne = async (userId: ObjectId | string, professorId:ObjectId|string): Promise<User[]> => {
-  return new Promise (async (resolve,reject) => {
+export const getProfessorsAdvisorsByUserIdButOne = async (userId: ObjectId | string, professorId: ObjectId | string): Promise<User[]> => {
+  return new Promise(async (resolve, reject) => {
     try {
       let professors = await getProfessorsByUserId(ensureObjectId(userId));
       let advisors = await getAdvisorsByUserId(ensureObjectId(userId));
-      let all : string[]=[];
+      let all: string[] = [];
 
       professors.forEach((professor: any) => {
         if (!all.includes(professor)) {
           all.push(professor);
         }
       });
-      
+
       advisors.forEach((advisor: any) => {
         if (!all.includes(advisor)) {
           all.push(advisor);
         }
       });
       all = all.filter(item => item !== professorId);
-      
+
       if (all) {
-        let db=await getDB();
+        let db = await getDB();
         const usersCollection = db.collection<User>('users');
         const allProfiles = await usersCollection.find({ _id: { $in: all.map(id => new ObjectId(id)) } }).toArray();
 
-      
+
         resolve(allProfiles);
       } else {
         reject(new MongoFindError("Professors and advisors not Found"));
       }
-    } catch (err) {    throw err; 
+    } catch (err) {
+      throw err;
     }
   })
+};
+
+export const getAllStudentsInClassByClassId = async (classId: ObjectId | string): Promise<User[]> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const db = await getDB();
+      const courseCollection = db.collection<Course>("courses");
+      const course = await courseCollection.findOne({_id: ensureObjectId(classId)});
+      if(course) {
+        const studentIds = course.students;
+        const userCollection = db.collection<User>("users");
+        const students = [];
+        for(let i=0; i<studentIds.length; i++) {
+          const student = await userCollection.findOne({_id: studentIds[i]});
+          if(student) {
+            students[i] = student;
+          }
+        }
+
+        if(students) {
+          resolve(students);
+        }
+
+
+      } else {
+        reject(new MongoFindError("List of students for given course ID not found"));
+      }
+    } catch (err) {
+      throw err;
+    }
+  });
 };
 
