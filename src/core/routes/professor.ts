@@ -10,7 +10,6 @@ import { BadRequestError, UnauthorizedError } from "../errors/user";
 import { ensureObjectId } from "../config/utils/mongohelper";
 import { getAvailabilityById, getAvailabilityByProfessorId, getAvailabilityListByProfessorId } from "../../mongo/queries/availability";
 import { updateAvailability } from "../../mongo/mutations/availability";
-import { updateAppointmentStatusAndLocationById } from "../../mongo/mutations/appointment";
 import { ObjectId } from "mongodb";
 import { AppointmentStatus } from "../../models/appointment";
 
