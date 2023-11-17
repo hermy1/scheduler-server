@@ -8,6 +8,7 @@ import session from "express-session";
 import userRoutes from "./core/routes/user";
 import professorRoutes from "./core/routes/professor";
 import MongoStore from "connect-mongo";
+import cors from "cors";
 
 interface MainOptions {
   port: number;
@@ -41,6 +42,11 @@ export async function main(options: MainOptions) {
       //call mongo store for session
       store: mongoStore
     });
+    //set up cors 
+    app.use(cors({
+      origin: config.corsOrigin,
+      credentials: true
+      }))
     //set session
     app.use(sess);
     
