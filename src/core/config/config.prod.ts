@@ -19,7 +19,8 @@ const config: Config = {
         user: process.env.MAIL_USER ?? '',
         pass: process.env.MAIL_PASS ?? '',
         subject_text: "Auth Code"
-    }
+    },
+    corsOrigin: process.env.CORS_ORIGIN || ''
 }
 
 export default config
