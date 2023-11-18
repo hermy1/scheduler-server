@@ -158,10 +158,14 @@ router.post(
           let userInfo = await getUserInfo(req.session.Me._id);
           res.json({ success: true, user: userInfo });
         } else {
-          res.json({ message: "Password is incorrect" });
+          //res.json({ message: "Password is incorrect" });
           throw new Error("Password is incorrect");
+        }}
+        else {
+          throw new Error("Username is incorrect");
+
         }
-      }
+      
     } catch (err) {
       next(err);
     }
