@@ -5,8 +5,8 @@ import * as http from "http";
 import config from "./core/config";
 import { Me } from "./models/me";
 import session from "express-session";
-import userRoutes from "./core/routes/user";
-import professorRoutes from "./core/routes/professor";
+import userRoutes from "./routes/user";
+import professorRoutes from "./routes/professor";
 import MongoStore from "connect-mongo";
 import cors from "cors";
 
@@ -29,7 +29,7 @@ export async function main(options: MainOptions) {
     const mongoStore = MongoStore.create({
       mongoUrl: config.server.mongoConnect,
       collectionName: "sessions",
-    })
+    });
     //set body parser and limit size for attacks
     app.use(bodyParser.json({ limit: "5mb" }));
     // for parsing application/x-www-form-urlencoded
@@ -40,22 +40,24 @@ export async function main(options: MainOptions) {
       saveUninitialized: false,
       cookie: { secure: false, maxAge: 86400000 },
       //call mongo store for session
-      store: mongoStore
+      store: mongoStore,
     });
-    //set up cors 
-    app.use(cors({
-      origin: config.corsOrigin,
-      credentials: true
-      }))
+    //set up cors
+    app.use(
+      cors({
+        origin: config.corsOrigin,
+        credentials: true,
+      })
+    );
     //set session
     app.use(sess);
-    
+
     //set routes
     app.use("/user", userRoutes);
 
     //professor routes
     app.use("/professor", professorRoutes);
-    
+
     //sample hello world route
     app.get("/", (req: Request, res: Response, next: NextFunction) => {
       res.json("Hello world, Root route");
