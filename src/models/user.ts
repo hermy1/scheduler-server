@@ -26,3 +26,20 @@ export class User {
     updatedAt: Date = new Date();
 }
 
+//public user for public profile
+export class PublicUser {
+    _id: ObjectId = new ObjectId();
+    username: string = '';
+    email: string = '';
+    role: UserRole = UserRole.Student || UserRole.Professor;
+    major: string = '';
+    minor: string = '';
+    department: string = '';
+    title: string = '';
+    grade: string = '';
+    firstName: string = '';
+    lastName: string = '';
+    avatar: string = '';
+    createdAt: Date = new Date();
+}
+

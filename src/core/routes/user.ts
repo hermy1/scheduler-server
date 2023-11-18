@@ -1,7 +1,7 @@
 import express, { Request, Response, NextFunction, Router } from "express";
 import { Me } from "../../models/me";
 import { isLoggedIn, isProfessor, isStudent } from "../middleware/auth";
-import { checkIfUserExists, getProfessorByUserId, getProfessorsByUserId, getAdvisorsByUserId, getUpcomingMeetings, getUserbyEmail, getUserbyId, getUserbyUsername, getProfessorsAdvisorsByUserId, getProfessorsAdvisorsByUserIdButOne } from "../../mongo/queries/users";
+import { checkIfUserExists, getProfessorByUserId, getProfessorsByUserId, getAdvisorsByUserId, getUpcomingMeetings, getUserbyEmail, getUserbyId, getUserbyUsername, getProfessorsAdvisorsByUserId, getProfessorsAdvisorsByUserIdButOne, getUserInfo } from "../../mongo/queries/users";
 import { changePassword, insertNewUser, resetPassword } from "../../mongo/mutations/users";
 import bycrpt, { genSaltSync, hashSync } from "bcrypt";
 import { User, UserRole } from "../../models/user";
@@ -116,10 +116,11 @@ router.post("/login", async (req: Request, res: Response, next: NextFunction) =>
       if(isPasswordCorrect) {
         let me = new Me();
         me.username = username;
+        me._id = user._id;
         me.role = user.role;
-        req.session.Me = me;        
-        console.log(req.session.Me);
-        res.json({message: "Login successful", Me: req.session.Me.role});
+        req.session.Me = me;     
+        let userInfo = await getUserInfo(req.session.Me._id);   
+        res.json({success: true, user: userInfo});
       } else {
         res.json({message: "Password is incorrect"});
         throw new Error("Password is incorrect");
