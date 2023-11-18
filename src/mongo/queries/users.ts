@@ -1,5 +1,5 @@
 import { ensureObjectId, getDB } from "../../core/config/utils/mongohelper";
-import { User, UserRole } from "../../models/user";
+import { PublicUser, User, UserRole } from "../../models/user";
 import { MongoFindError } from "../../core/errors/mongo";
 import { Appointment, AppointmentStatus } from "../../models/appointment";
 import { Advisor } from "../../models/advisor";
@@ -34,6 +34,37 @@ export const getUserbyUsername = async (username: string): Promise<User> => {
     } catch (err) { }
   })
 };
+//get user infor and remove password, birthdate, and email for public profile
+export const getUserInfo = async (userId: ObjectId): Promise<PublicUser> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let db = await getDB();
+      const collection = db.collection<User>("users");
+      const result = await collection.findOne({ _id: ensureObjectId(userId) });
+      if (result) {
+        let user = new PublicUser();
+        user._id = result._id;
+        user.username = result.username;
+        user.email = result.email;
+        user.role = result.role;
+        user.major = result.major;
+        user.minor = result.minor;
+        user.department = result.department;
+        user.title = result.title;
+        user.grade = result.grade;
+        user.firstName = result.firstName;
+        user.lastName = result.lastName;
+        user.avatar = result.avatar;
+        user.createdAt = result.createdAt;
+        resolve(user);
+      } else {
+        reject(new MongoFindError("User not found"));
+      }
+    } catch (err) { 
+     reject(err);
+    }
+  })
+};
 export const getUserbyEmail = async (email: string): Promise<User> => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -45,7 +76,9 @@ export const getUserbyEmail = async (email: string): Promise<User> => {
       } else {
         reject(new MongoFindError("User not found"));
       }
-    } catch (err) { }
+    } catch (err) { 
+      reject(err);
+    }
   })
 };
 
@@ -60,7 +93,9 @@ export const getUserbyId = async (userId: string): Promise<User> => {
       } else {
         reject(new MongoFindError("User not found"));
       }
-    } catch (err) { }
+    } catch (err) { 
+      reject(err);
+    }
   })
 };
 
@@ -122,7 +157,9 @@ export const getAdvisorbyProfesserId = async (professorId: ObjectId): Promise<Ad
       } else {
         reject(new MongoFindError("Professor Not Found"));
       }
-    } catch (err) { }
+    } catch (err) { 
+      reject(err);
+    }
   })
 };
 export const AdvisorbyProfesserId = async (professorId: ObjectId): Promise<boolean> => {
@@ -136,7 +173,9 @@ export const AdvisorbyProfesserId = async (professorId: ObjectId): Promise<boole
       } else {
         resolve(false);
       }
-    } catch (err) { }
+    } catch (err) {
+      reject(err);
+     }
   })
 };
 
