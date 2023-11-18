@@ -169,7 +169,7 @@ router.post(
 );
 
 //profile
-router.post(
+router.get(
   "/profile",
   isLoggedIn,
   async (req: Request, res: Response, next: NextFunction) => {
@@ -187,7 +187,7 @@ router.post(
   }
 );
 
-//get all students
+//get all students TODO: Remove senstive information
 router.get(
   "/students",
   isLoggedIn,
