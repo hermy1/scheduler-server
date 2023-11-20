@@ -47,6 +47,7 @@ import {
   allNotifications,
   getNotification,
 } from "../mongo/queries/notification";
+import { getAvailabilityListByProfessorId } from "../mongo/queries/availability";
 
 const router: Router = express.Router();
 //test route
@@ -406,6 +407,8 @@ router.post(
       const startTime = req.body.startTime.toString();
       const endTime = req.body.endTime.toString();
       const advisor = req.body.advisor.toString();
+      const availabilityId = req.body.availabilityId.toString();
+      const message= req.body.message.toString();
       let guestId: string = "";
       if (req.body.guestId) {
         guestId = req.body.guestId.toString();
@@ -418,7 +421,6 @@ router.post(
       } else {
         reason = "";
       }
-
       if (me) {
         let userId = await (await getUserbyUsername(me?.username))._id;
 
@@ -435,9 +437,7 @@ router.post(
           if (createAppointent) {
             res.json(createAppointent);
           } else {
-            res.json({
-              message: "Something went wrong when creating a new appointment",
-            });
+
             throw new BadRequestError(
               "Something went wrong when creating a new appointment"
             );
@@ -790,16 +790,20 @@ router.post(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const me = req.session.Me;
-      let professorId = req.body.professorId.toString();
+      let professorId:string = req.body.professorId.toString();
       if (me) {
+        console.log(me,professorId);
         let id = (await getUserbyUsername(me.username))._id;
+        console.log('id',id);
         let all = await getProfessorsAdvisorsByUserIdButOne(id, professorId);
+        console.log('all',all);
         if (all) {
           res.json(all);
         } else {
-          res.json(
-            "Something went wrong when getting advisors and professors for student"
-          );
+          throw new Error('Something went wrong when getting professors');
+          //res.json(
+           // "Something went wrong when getting advisors and professors for student"
+         // );
         }
       } else {
         res.json({ message: "You are not authorized" });
@@ -889,5 +893,33 @@ router.get(
     }
   }
 );
+
+router.get(
+  "/professorAvailability",
+  isLoggedIn,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      let me = req.session.Me;
+      let professorId= req.query.professorId;
+      if (me && me.username && me.username.length > 0) {
+        if (professorId) {
+          const availability = await getAvailabilityListByProfessorId(
+            ensureObjectId(professorId.toString())
+          );
+          if (availability) {
+            res.json(availability);
+          } else {
+            throw new BadRequestError(
+              "Something went wrong when getting availability"
+            );
+          }
+        } else {
+          throw new UnauthorizedError("Unauthorized");
+        }
+      }
+    } catch (err) {
+      next(err);
+    }
+  });
 
 export default router;

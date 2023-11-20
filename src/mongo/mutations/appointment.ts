@@ -10,12 +10,15 @@ export const createAppointment = async (userId:string,professorId:string,startTi
         try {
             let shouldContinue = false;
             const isAdvisor = advisor === 'true';
-
+console.log('sdsad',isAdvisor);
             //if advisor check if student is in advisor's students array
             if (isAdvisor){
+                
                 let isStudent = await UserInAdvisor(professorId,userId);
+                console.log('ssss',isStudent);
                 if (isStudent === true){
                     shouldContinue = true;
+                    console.log('con',shouldContinue);
                 }
             } else {
                 //check to see if student is an professor class
@@ -25,7 +28,7 @@ export const createAppointment = async (userId:string,professorId:string,startTi
                     shouldContinue = true;
                 }
             }
-            
+            console.log('end',shouldContinue);
 
             if(shouldContinue === true){
                 const userObjectId = ensureObjectId(userId);

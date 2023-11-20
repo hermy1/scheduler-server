@@ -44,11 +44,12 @@ export async function main(options: MainOptions) {
       store: mongoStore
     });
     //set up cors 
-    app.use(cors({     
-         "origin": ["http://localhost:19006"],
-        "methods": "GET, HEAD, PUT, PATCH, POST, DELETE",
-        "credentials": true
-      }));
+    app.use(
+      cors({
+        origin: config.corsOrigin,
+        credentials: true,
+      })
+    );
     //set session
     app.use(sess);
     
