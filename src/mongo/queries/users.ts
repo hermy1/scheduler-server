@@ -418,3 +418,37 @@ export const getAllStudentsInClassByClassId = async (classId: ObjectId | string)
   });
 };
 
+export const getPastMeetings = async (student: ObjectId, status: AppointmentStatus): Promise<Appointment[]> => {
+  try {
+    console.log("student: ", student, "status: ", status);
+    const db = await getDB();
+    const collection = db.collection<User>('users');
+    const pipeline = [
+      {
+        $match: { _id: student },
+      },
+      {
+        $lookup: {
+          from: 'appointments',
+          let: { id: "$_id" },
+          pipeline: [
+            // checking for student appointment & status accepted & any end date/time less than the current date/time
+            {$match:{ $and: [{$expr: { $eq: ['$student', '$$id'] }}, {$expr: {$eq: ['$status', status]}},
+            {$expr: {$lt: ['$endDateTime', new Date()]}} 
+          ]} },
+          ],
+          as: 'appointment',
+        },
+      },
+      {
+        $unwind: { path: '$appointment', preserveNullAndEmptyArrays: false },
+      },
+    ];
+    
+    const result: AggregationCursor<Appointment> = collection.aggregate(pipeline);
+    const appointmentArray: Appointment[] = await result.toArray();
+    return appointmentArray;
+  } catch (err) {
+    throw err; 
+  }
+};
