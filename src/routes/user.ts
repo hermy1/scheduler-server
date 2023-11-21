@@ -13,6 +13,7 @@ import {
   getProfessorsAdvisorsByUserId,
   getProfessorsAdvisorsByUserIdButOne,
   getUserInfo,
+  getPastMeetings,
 } from "../mongo/queries/users";
 import {
   changePassword,
@@ -876,6 +877,32 @@ router.get(
           res.json({ message: "You did not send up an appointmentId" });
           throw new BadRequestError(`You did not send up an appointmentId`);
         }
+      } else {
+        res.json({ message: "You are not authorized" });
+        throw new UnauthorizedError(`You are not authorized`);
+      }
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.get(
+  "/pastAppointments",
+  isLoggedIn,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      let me = req.session.Me;
+      if (me) {
+          const getAppointment = await getPastMeetings(ensureObjectId(me._id),AppointmentStatus.Accepted);
+          if (getAppointment) {
+            res.json(getAppointment);
+          } else {
+            res.json(
+              "Something went wrong and could not retreieve the appointment"
+            );
+          }
+      
       } else {
         res.json({ message: "You are not authorized" });
         throw new UnauthorizedError(`You are not authorized`);
