@@ -34,7 +34,7 @@ export const createNotification = async (userId: string|ObjectId,title: string,d
           let db = await getDB();
           let collection = db.collection<Notification>('notifications');
           let update = await collection.updateOne({ _id: ensureObjectId(notificationId) },{ $set: { read: true} });
-          if( update.modifiedCount>0){
+          if( update.acknowledged){
             resolve(true);
           } else {
             throw new MongoUpdateError("Error updating notification");
