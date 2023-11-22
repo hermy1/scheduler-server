@@ -350,42 +350,34 @@ export const getProfessorsAdvisorsByUserId = async (userId: ObjectId | string): 
     }
   })
 };
-
-export const getProfessorsAdvisorsByUserIdButOne = async (userId: ObjectId | string, professorId: ObjectId | string): Promise<User[]> => {
+export const getProfessorsAdvisorsByUserIdButOne = async (
+  userId: ObjectId | string,
+  professorId: ObjectId | string
+): Promise<User[]> => {
   return new Promise(async (resolve, reject) => {
     try {
-      let professors = await getProfessorsByUserId(ensureObjectId(userId));
-      let advisors = await getAdvisorsByUserId(ensureObjectId(userId));
-      let all: string[] = [];
+      const professors = await getProfessorsByUserId(ensureObjectId(userId));
+      const advisors = await getAdvisorsByUserId(ensureObjectId(userId));
 
-      professors.forEach((professor: any) => {
-        if (!all.includes(professor)) {
-          all.push(professor);
-        }
-      });
+      // Using Set for uniqueness based on _id
+      const uniqueUsers = new Set([...professors, ...advisors].map(user => user._id.toString()));
 
-      advisors.forEach((advisor: any) => {
-        if (!all.includes(advisor)) {
-          all.push(advisor);
-        }
-      });
-      all = all.filter(item => item !== professorId);
+      // Remove the specified professor
+      uniqueUsers.delete(professorId.toString());
 
-      if (all) {
-        let db = await getDB();
-        const usersCollection = db.collection<User>('users');
-        const allProfiles = await usersCollection.find({ _id: { $in: all.map(id => new ObjectId(id)) } }).toArray();
+      // Fetch user profiles for remaining users
+      const profiles = await Promise.all(Array.from(uniqueUsers).map(async (userId) => {
+        const user = await getUserbyId(userId);
+        return user;
+      }));
 
-
-        resolve(allProfiles);
-      } else {
-        reject(new MongoFindError("Professors and advisors not Found"));
-      }
+      resolve(profiles);
     } catch (err) {
-      throw err;
+      reject(err);
     }
-  })
+  });
 };
+
 
 export const getAllStudentsInClassByClassId = async (classId: ObjectId | string): Promise<User[]> => {
   return new Promise(async (resolve, reject) => {
