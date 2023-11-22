@@ -117,6 +117,25 @@ export const checkIfUserExists = async (username: string): Promise<boolean> => {
   });
 };
 
+//check if email exists
+export const checkIfEmailExists = async (email: string): Promise<boolean> => {
+  return new Promise (async (resolve, reject) => {
+    try {
+      let db = await getDB();
+      const collection = db.collection<User>("users");
+      const result = await collection.findOne({ email: email });
+      if(result && result.email && result.email.length > 0) {
+        resolve(true);
+      } else {
+        resolve(false);
+      }
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
+
 //get all students
 export const getAllStudents = async (): Promise<User[]> => {
   return new Promise(async (resolve, reject) => {

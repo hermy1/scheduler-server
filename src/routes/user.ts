@@ -13,11 +13,13 @@ import {
   getProfessorsAdvisorsByUserId,
   getProfessorsAdvisorsByUserIdButOne,
   getUserInfo,
+  checkIfEmailExists,
 } from "../mongo/queries/users";
 import {
   changePassword,
   insertNewUser,
   resetPassword,
+  updateUserInfo,
 } from "../mongo/mutations/users";
 import bycrpt, { genSaltSync, hashSync } from "bcrypt";
 import { User, UserRole } from "../models/user";
@@ -68,78 +70,118 @@ router.get("/ping", async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
-//add new user
-router.post(
-  "/register",
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const {
-        username,
-        password,
-        email,
-        role,
-        major,
-        minor,
-        department,
-        title,
-        grade,
-        gender,
-        birthdate,
-        firstName,
-        lastName,
-        avatar,
-      } = req.body;
-
-      //check if user exists
-      const user = await checkIfUserExists(username);
-
-      if (!user) {
+router.post('/register', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const {
+      username, 
+      email,
+      role,
+      firstName,
+      lastName,
+      password,
+      confirmPassword
+    } = req.body;
+    const checkUser = await checkIfEmailExists(email);
+    const checkUsername = await checkIfUserExists(username);
+    if(!checkUser && !checkUsername) {
+      if(password === confirmPassword) {
         const salt = genSaltSync(10);
         const hashedPassword = hashSync(password, salt);
         const newUser = new User();
         newUser.username = username;
-        newUser.password = hashedPassword;
         newUser.email = email;
         newUser.role = role;
-        newUser.major = major;
-        newUser.minor = minor;
-        newUser.department = department;
-        newUser.title = title;
-        newUser.grade = grade;
-        newUser.gender = gender;
-        newUser.birthdate = new Date(birthdate);
         newUser.firstName = firstName;
         newUser.lastName = lastName;
-        newUser.avatar = avatar;
+        newUser.password = hashedPassword;
         newUser.createdAt = new Date();
         newUser.updatedAt = new Date();
-
         const result = await insertNewUser(
           newUser.username,
-          hashedPassword,
-          newUser.role,
           newUser.email,
-          newUser.major,
-          newUser.minor,
-          newUser.department,
-          newUser.grade,
-          newUser.gender,
-          newUser.title,
-          newUser.birthdate,
-          newUser.avatar,
+          newUser.role,
           newUser.firstName,
-          newUser.lastName
+          newUser.lastName,
+          newUser.password
         );
-        res.json({ message: "User created successfully", result });
+        //send code to email using userId and email
+        let sendCode = await sendEmailAuthCode(result._id.toString(), email.toString());
+        if (sendCode) {
+          res.json({ message: "A verification code was sent to your email", result }); 
+        } else {
+          res.json({ message: "Could not send code" });
+          throw new Error("Could not send code");
+        }
       } else {
-        res.json({ message: "username already exists" });
-        throw new MongoInsertError("User already exists");
+        res.json({ message: "Passwords do not match" });
+        throw new MongoInsertError("Passwords do not match");
       }
-    } catch (err) {
-      next(err);
+    } else {
+      res.status(400).json({ message: "It looks like you already have an account with us"});
+      throw new MongoInsertError("Email already exists");
     }
+  } catch (err) {
+    next(err);
   }
-);
+}) 
+
+//add info to user
+router.put('/updateinfo', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { 
+      userId,
+      role,
+      major,
+      minor,
+      department,
+      grade,
+      gender,
+      title,
+      birthdate,
+      avatar
+    } = req.body;
+    const user = await getUserbyId(userId);
+    if(user){
+      if(role === UserRole.Student){
+        user.major = major;
+        user.minor = minor;
+        user.grade = grade;
+        user.avatar = avatar;
+        user.birthdate = new Date(birthdate);
+        user.updatedAt = new Date();
+        const result = await updateUserInfo(user);
+        if(result){
+          res.json({ message: "Student Profile updated successfully", result });
+        } else {
+          res.json({ message: "Something went wrong when updating user" });
+          throw new MongoInsertError("Something went wrong when updating user");
+        }
+      } else if(role === UserRole.Professor){
+        user.department = department;
+        user.title = title;
+        user.avatar = avatar;
+        user.birthdate = new Date(birthdate);
+        user.gender = gender;
+        user.updatedAt = new Date();
+        const result = await updateUserInfo(user);
+        if(result){
+          res.json({ message: "Professor Profile updated successfully", result });
+        } else {
+          res.json({ message: "Something went wrong when updating user" });
+          throw new MongoInsertError("Something went wrong when updating user");
+        }
+      } else {
+        res.json({ message: "Role does not exist" });
+        throw new MongoInsertError("Role does not exist");
+      }
+    } else {
+      res.json({ message: "This is strange, but you don't exist here, signup" });
+      throw new MongoInsertError("User does not exist");
+    }
+  } catch (err) {
+    next(err);
+  }
+});
 
 //login
 router.post(
@@ -256,7 +298,9 @@ router.post(
           me.username = user.username;
           me.role = user.role;
           req.session.Me = me;
-          res.json({ message: "Your code matches" });
+          //TODO:set isVerified to true
+          //user role and userid, username send back to front end
+          res.json({ message: "Your code matches", user: me });
           //can then change password
         } else {
           res.json({ message: "The code is not correct" });
