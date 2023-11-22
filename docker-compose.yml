@@ -11,14 +11,14 @@ services:
     networks:
       - default
     depends_on:
-      # - redis
+      - redis
       - mongo
-  # redis:
-  #   image: redis
-  #   ports:
-  #     - "6379:6379"
-  #   networks:
-  #     - default
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - default
   mongo:
     image: mongo
     ports:
