@@ -5,7 +5,7 @@ import { MongoInsertError, MongoUpdateError, MongoFindError } from "../../core/e
 import { UserInAdvisor, UserInProfessorCourse } from "../queries/appointment";
 
 
-export const createAppointment = async (userId:string,professorId:string,startTime:string, endTime:string, advisor:string,reason:string,guestId:string): Promise<Appointment | string> => {
+export const createAppointment = async (userId:string,professorId:string,startTime:string, endTime:string, advisor:string,reason:string,guestId:string, timeArray:string): Promise<Appointment | string> => {
     return new Promise(async (resolve, reject) => {
         try {
             let shouldContinue = false;
@@ -14,6 +14,7 @@ export const createAppointment = async (userId:string,professorId:string,startTi
             //if advisor check if student is in advisor's students array
             if (isAdvisor){
                 let isStudent = await UserInAdvisor(professorId,userId);
+                console.log('ad',isStudent);
                 if (isStudent === true){
                     shouldContinue = true;
                 }
@@ -21,7 +22,9 @@ export const createAppointment = async (userId:string,professorId:string,startTi
                 //check to see if student is an professor class
 
                 let isStudent = await UserInProfessorCourse(professorId,userId);
+
                 if (isStudent === true){
+
                     shouldContinue = true;
                 }
             }

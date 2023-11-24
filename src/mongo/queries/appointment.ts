@@ -10,18 +10,22 @@ export const UserInAdvisor = async (advisorId: string, userId: string): Promise<
             let db = await getDB();
             const collection = await db.collection<Advisor>('advisors');
             const results = await collection.findOne({ professorId: ensureObjectId(advisorId)});
+            
             if (results) {
-                let studentsArray = results.students
-                for(let i=0;i<studentsArray.length;i++){
-                    console.log('in loop');
+                let studentsArray = results.students;
+                let isUserAssociated = false;
 
-                    if (studentsArray[i].toString() === userId){
-                        console.log('is true',studentsArray[i],ensureObjectId(userId));
-                        resolve(true);
-                    } else {
-                        resolve(false);
+                for (let i = 0; i < studentsArray.length; i++) {
+                    console.log(studentsArray);
+
+                    if (studentsArray[i].toString() === userId) {
+
+                        isUserAssociated = true;
+                        break; // exit the loop as soon as a match is found
                     }
                 }
+
+                resolve(isUserAssociated);
             } else {
                 resolve(false);
             }
@@ -30,6 +34,7 @@ export const UserInAdvisor = async (advisorId: string, userId: string): Promise<
         }
     });
 };
+
 
 export const UserInProfessorCourse = async (professorId: string, userId: string): Promise<boolean> => {
     return new Promise(async (resolve, reject) => {

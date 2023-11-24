@@ -358,23 +358,25 @@ export const getProfessorsAdvisorsByUserIdButOne = async (userId: ObjectId | str
       let advisors = await getAdvisorsByUserId(ensureObjectId(userId));
       let all: string[] = [];
 
-      professors.forEach((professor: any) => {
-        if (!all.includes(professor)) {
-          all.push(professor);
+      professors.forEach((professor: User) => {
+        if (!all.includes(professor._id.toString())) {
+          all.push(professor._id.toString());
         }
       });
 
-      advisors.forEach((advisor: any) => {
-        if (!all.includes(advisor)) {
-          all.push(advisor);
+      advisors.forEach((advisor: User) => {
+        if (!all.includes(advisor._id.toString())) {
+          all.push(advisor._id.toString());
         }
       });
-      all = all.filter(item => item !== professorId);
+      all = all.filter(item => item !== professorId.toString());
 
       if (all) {
+
         let db = await getDB();
         const usersCollection = db.collection<User>('users');
         const allProfiles = await usersCollection.find({ _id: { $in: all.map(id => new ObjectId(id)) } }).toArray();
+       
 
 
         resolve(allProfiles);
@@ -418,3 +420,36 @@ export const getAllStudentsInClassByClassId = async (classId: ObjectId | string)
   });
 };
 
+export const getPastMeetings = async (student: ObjectId, status: AppointmentStatus): Promise<Appointment[]> => {
+  try {
+    const db = await getDB();
+    const collection = db.collection<User>('users');
+    const pipeline = [
+      {
+        $match: { _id: student },
+      },
+      {
+        $lookup: {
+          from: 'appointments',
+          let: { id: "$_id" },
+          pipeline: [
+            // checking for student appointment & status accepted & any end date/time less than the current date/time
+            {$match:{ $and: [{$expr: { $eq: ['$student', '$$id'] }}, {$expr: {$eq: ['$status', status]}},
+            {$expr: {$lt: ['$endDateTime', new Date()]}} 
+          ]} },
+          ],
+          as: 'appointment',
+        },
+      },
+      {
+        $unwind: { path: '$appointment', preserveNullAndEmptyArrays: false },
+      },
+    ];
+    
+    const result: AggregationCursor<Appointment> = collection.aggregate(pipeline);
+    const appointmentArray: Appointment[] = await result.toArray();
+    return appointmentArray;
+  } catch (err) {
+    throw err; 
+  }
+};
