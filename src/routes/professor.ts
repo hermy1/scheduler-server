@@ -465,4 +465,14 @@ router.delete(
     }
   }
 );
+
+router.get("/logout", isLoggedIn ,async (req:Request, res:Response, next:NextFunction) => {
+  req.session.destroy(err => {
+    if (err) {
+      console.error("Error Destroying the session: ", err)
+      return res.status(500).send("Internal Server Error")
+    }
+    //Eventually can add res.redirect("/login") to redirect to a login page
+  })
+})
 export default router;
