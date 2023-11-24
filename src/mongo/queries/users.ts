@@ -117,6 +117,25 @@ export const checkIfUserExists = async (username: string): Promise<boolean> => {
   });
 };
 
+//check if email exists
+export const checkIfEmailExists = async (email: string): Promise<boolean> => {
+  return new Promise (async (resolve, reject) => {
+    try {
+      let db = await getDB();
+      const collection = db.collection<User>("users");
+      const result = await collection.findOne({ email: email });
+      if(result && result.email && result.email.length > 0) {
+        resolve(true);
+      } else {
+        resolve(false);
+      }
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
+
 //get all students
 export const getAllStudents = async (): Promise<User[]> => {
   return new Promise(async (resolve, reject) => {
@@ -350,8 +369,10 @@ export const getProfessorsAdvisorsByUserId = async (userId: ObjectId | string): 
     }
   })
 };
-
-export const getProfessorsAdvisorsByUserIdButOne = async (userId: ObjectId | string, professorId: ObjectId | string): Promise<User[]> => {
+export const getProfessorsAdvisorsByUserIdButOne = async (
+  userId: ObjectId | string,
+  professorId: ObjectId | string
+): Promise<User[]> => {
   return new Promise(async (resolve, reject) => {
     try {
       let professors = await getProfessorsByUserId(ensureObjectId(userId));
@@ -384,10 +405,11 @@ export const getProfessorsAdvisorsByUserIdButOne = async (userId: ObjectId | str
         reject(new MongoFindError("Professors and advisors not Found"));
       }
     } catch (err) {
-      throw err;
+      reject(err);
     }
-  })
+  });
 };
+
 
 export const getAllStudentsInClassByClassId = async (classId: ObjectId | string): Promise<User[]> => {
   return new Promise(async (resolve, reject) => {
