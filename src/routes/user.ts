@@ -25,7 +25,7 @@ import bycrpt, { genSaltSync, hashSync } from "bcrypt";
 import { User, UserRole } from "../models/user";
 import { MongoInsertError } from "../core/errors/mongo";
 import { getAllStudents, getAllProfessors } from "../mongo/queries/users";
-import { BadRequestError, UnauthorizedError } from "../core/errors/user";
+import { BadRequestError, NotFoundError, UnauthorizedError } from "../core/errors/user";
 import {
   checkIfCodeMatches,
   resendEmailAuthCode,
@@ -193,7 +193,7 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
     try {
       user = await getUserbyUsername(username);
     } catch (err) {
-      throw new UnauthorizedError('Username is incorrect try again');  
+      throw new NotFoundError('Username is incorrect try again');  
     }
     const isPasswordCorrect = bycrpt.compareSync(password, user.password);
     if (isPasswordCorrect) {
@@ -205,7 +205,7 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
       let userInfo = await getUserInfo(req.session.Me._id);
       res.json({ success: true, user: userInfo });
     } else {
-      throw new UnauthorizedError('Password is incorrect try again');
+      throw new NotFoundError('Password is incorrect try again'); 
     }
   } catch (err) {
     next(err);
