@@ -111,12 +111,10 @@ router.post('/register', async (req: Request, res: Response, next: NextFunction)
         if (sendCode) {
           res.json({ message: "A verification code was sent to your email", result }); 
         } else {
-          res.json({ message: "Could not send code" });
-          throw new Error("Could not send code");
+          throw new ServerError("Could not send code"); 
         }
       } else {
-        res.json({ message: "Passwords do not match" });
-        throw new MongoInsertError("Passwords do not match");
+        throw new BadRequestError("Passwords do not match");
       }
     } else {
       res.status(400).json({ message: "It looks like you already have an account with us"});
