@@ -207,6 +207,7 @@ export const getUpcomingMeetings = async (student: ObjectId, status: Appointment
   try {
     const db = await getDB();
     const collection = db.collection<User>('users');
+    console.log(new Date());
     const pipeline = [
       {
         $match: { _id: student },
@@ -217,8 +218,16 @@ export const getUpcomingMeetings = async (student: ObjectId, status: Appointment
           let: { id: "$_id" },
           pipeline: [
             // checking for student appointment & status accepted
-            //TODO: only show appointments with future dates
-            { $match: { $and: [{ $expr: { $eq: ['$student', '$$id'] } }, { $expr: { $eq: ['$status', status] } }] } },
+            // TODO: only show appointments with future dates
+            { $match: { 
+                $and: [
+                  { $expr: { $eq: ['$student', '$$id'] } },
+                  { $expr: { $eq: ['$status', status] } },
+                  { $expr: { $eq: ['$studentCancelled', false] } }, // Ensure studentCancelled is false
+                  { $expr: { $gt: ['$startDateTime', new Date()] } }, // Only show appointments with future dates
+                ]
+              } 
+            },
           ],
           as: 'appointment',
         },
