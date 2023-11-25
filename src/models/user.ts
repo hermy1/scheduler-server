@@ -41,6 +41,8 @@ export class PublicUser {
     firstName: string = '';
     lastName: string = '';
     avatar: string = '';
+    gender: string = '';
+    birthday: Date = new Date();
     createdAt: Date = new Date();
 }
 

@@ -57,6 +57,8 @@ export const getUserInfo = async (userId: ObjectId): Promise<PublicUser> => {
         user.firstName = result.firstName;
         user.lastName = result.lastName;
         user.avatar = result.avatar;
+        user.gender = result.gender;
+        user.birthday = result.birthdate;
         user.createdAt = result.createdAt;
         resolve(user);
       } else {
