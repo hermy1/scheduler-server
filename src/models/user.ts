@@ -21,7 +21,7 @@ export class User {
     firstName: string = '';
     lastName: string = '';
     avatar: string = '';
-    isVerified: boolean = false; //TODO update when user is verified
+    isVerified: boolean = false; 
     birthdate: Date = new Date();
     createdAt: Date = new Date();
     updatedAt: Date = new Date();
