@@ -79,7 +79,8 @@ router.post('/register', async (req: Request, res: Response, next: NextFunction)
       firstName,
       lastName,
       password,
-      confirmPassword
+      confirmPassword 
+
     } = req.body;
     const checkUser = await checkIfEmailExists(email);
     const checkUsername = await checkIfUserExists(username);
@@ -147,6 +148,7 @@ router.put('/updateinfo', async (req: Request, res: Response, next: NextFunction
         user.minor = minor;
         user.grade = grade;
         user.avatar = avatar;
+        user.gender = gender;
         user.birthdate = new Date(birthdate);
         user.updatedAt = new Date();
         const result = await updateUserInfo(user);
@@ -293,8 +295,12 @@ router.post(
       if (userId && code) {
         let codeMatches = await checkIfCodeMatches(userId, code);
         if (codeMatches) {
-          let user = await getUserbyId(userId);
-          let me = new Me();
+          const user = await getUserbyId(userId);
+          if(user){
+              user.isVerified = true;
+              const result = await updateUserInfo(user);
+              if(result){
+                   let me = new Me();
           me.username = user.username;
           me.role = user.role;
           req.session.Me = me;
@@ -302,7 +308,15 @@ router.post(
           //user role and userid, username send back to front end
           res.json({ message: "Your code matches", user: me });
           //can then change password
-        } else {
+              } else{
+                throw new Error("Something went wrong while verifying user");
+
+              }
+       
+        } else{
+          throw new Error("That user does not exist");
+        }
+        }else {
           res.json({ message: "The code is not correct" });
           throw new Error("That code is not correct");
         }
