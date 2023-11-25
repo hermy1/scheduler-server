@@ -379,22 +379,35 @@ export const getProfessorsAdvisorsByUserIdButOne = async (
 ): Promise<User[]> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const professors = await getProfessorsByUserId(ensureObjectId(userId));
-      const advisors = await getAdvisorsByUserId(ensureObjectId(userId));
+      let professors = await getProfessorsByUserId(ensureObjectId(userId));
+      let advisors = await getAdvisorsByUserId(ensureObjectId(userId));
+      let all: string[] = [];
 
-      // Using Set for uniqueness based on _id
-      const uniqueUsers = new Set([...professors, ...advisors].map(user => user._id.toString()));
+      professors.forEach((professor: User) => {
+        if (!all.includes(professor._id.toString())) {
+          all.push(professor._id.toString());
+        }
+      });
 
-      // Remove the specified professor
-      uniqueUsers.delete(professorId.toString());
+      advisors.forEach((advisor: User) => {
+        if (!all.includes(advisor._id.toString())) {
+          all.push(advisor._id.toString());
+        }
+      });
+      all = all.filter(item => item !== professorId.toString());
 
-      // Fetch user profiles for remaining users
-      const profiles = await Promise.all(Array.from(uniqueUsers).map(async (userId) => {
-        const user = await getUserbyId(userId);
-        return user;
-      }));
+      if (all) {
 
-      resolve(profiles);
+        let db = await getDB();
+        const usersCollection = db.collection<User>('users');
+        const allProfiles = await usersCollection.find({ _id: { $in: all.map(id => new ObjectId(id)) } }).toArray();
+       
+
+
+        resolve(allProfiles);
+      } else {
+        reject(new MongoFindError("Professors and advisors not Found"));
+      }
     } catch (err) {
       reject(err);
     }
@@ -433,3 +446,36 @@ export const getAllStudentsInClassByClassId = async (classId: ObjectId | string)
   });
 };
 
+export const getPastMeetings = async (student: ObjectId, status: AppointmentStatus): Promise<Appointment[]> => {
+  try {
+    const db = await getDB();
+    const collection = db.collection<User>('users');
+    const pipeline = [
+      {
+        $match: { _id: student },
+      },
+      {
+        $lookup: {
+          from: 'appointments',
+          let: { id: "$_id" },
+          pipeline: [
+            // checking for student appointment & status accepted & any end date/time less than the current date/time
+            {$match:{ $and: [{$expr: { $eq: ['$student', '$$id'] }}, {$expr: {$eq: ['$status', status]}},
+            {$expr: {$lt: ['$endDateTime', new Date()]}} 
+          ]} },
+          ],
+          as: 'appointment',
+        },
+      },
+      {
+        $unwind: { path: '$appointment', preserveNullAndEmptyArrays: false },
+      },
+    ];
+    
+    const result: AggregationCursor<Appointment> = collection.aggregate(pipeline);
+    const appointmentArray: Appointment[] = await result.toArray();
+    return appointmentArray;
+  } catch (err) {
+    throw err; 
+  }
+};

@@ -6,7 +6,7 @@ import { ObjectId } from "mongodb";
 */
 
 export class TimeSlot {
-    startTIme: Date = new Date();
+    startTime: Date = new Date();
     endTime: Date = new Date();
 }
 export class Availability {
