@@ -125,7 +125,7 @@ router.post('/register', async (req: Request, res: Response, next: NextFunction)
   }
 }) 
 
-//add info to user
+//add info to user (register flow)
 router.put('/updateinfo', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { 
@@ -149,6 +149,7 @@ router.put('/updateinfo', async (req: Request, res: Response, next: NextFunction
         user.avatar = avatar;
         user.birthdate = new Date(birthdate);
         user.updatedAt = new Date();
+        user.isVerified = true;
         const result = await updateUserInfo(user);
         if(result){
           res.json({ message: "Student Profile updated successfully", result });
@@ -163,6 +164,7 @@ router.put('/updateinfo', async (req: Request, res: Response, next: NextFunction
         user.birthdate = new Date(birthdate);
         user.gender = gender;
         user.updatedAt = new Date();
+        user.isVerified = true;  
         const result = await updateUserInfo(user);
         if(result){
           res.json({ message: "Professor Profile updated successfully", result });
@@ -184,36 +186,32 @@ router.put('/updateinfo', async (req: Request, res: Response, next: NextFunction
 });
 
 //login
-router.post(
-  "/login",
-  async (req: Request, res: Response, next: NextFunction) => {
+router.post('/login', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { username, password } = req.body;
+    let user: User;
     try {
-      const { username, password } = req.body;
-      const user = await getUserbyUsername(username);
-      if (user) {
-        const isPasswordCorrect = bycrpt.compareSync(password, user.password);
-        if (isPasswordCorrect) {
-          let me = new Me();
-          me.username = username;
-          me._id = user._id;
-          me.role = user.role;
-          req.session.Me = me;
-          let userInfo = await getUserInfo(req.session.Me._id);
-          res.json({ success: true, user: userInfo });
-        } else {
-          //res.json({ message: "Password is incorrect" });
-          throw new Error("Password is incorrect");
-        }}
-        else {
-          throw new Error("Username is incorrect");
-
-        }
-      
+      user = await getUserbyUsername(username);
     } catch (err) {
-      next(err);
+      res.json({ message: 'Username is incorrect try again' });
+      return;
     }
+    const isPasswordCorrect = bycrpt.compareSync(password, user.password);
+    if (isPasswordCorrect) {
+      let me = new Me();
+      me.username = username;
+      me._id = user._id;
+      me.role = user.role;
+      req.session.Me = me;
+      let userInfo = await getUserInfo(req.session.Me._id);
+      res.json({ success: true, user: userInfo });
+    } else {
+      res.json({ message: "Password is incorrect try again" });
+    }
+  } catch (err) {
+    next(err);
   }
-);
+});
 
 //profile
 router.get(
@@ -298,7 +296,6 @@ router.post(
           me.username = user.username;
           me.role = user.role;
           req.session.Me = me;
-          //TODO:set isVerified to true
           //user role and userid, username send back to front end
           res.json({ message: "Your code matches", user: me });
           //can then change password
@@ -965,5 +962,23 @@ router.get(
       next(err);
     }
   });
+
+  router.post('/logout', isLoggedIn, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const me = req.session.Me;
+      if(me) {
+        req.session.destroy((err) => {
+          if(err) {
+            res.json({ message: "Something went wrong when logging out" });
+            throw new UnauthorizedError(`Something went wrong when logging out`);
+          } else {
+            res.json({ succces:true, message: "You are logged out" });
+          }
+        })
+      }
+    } catch (err) {
+      next(err);
+    }
+  })
 
 export default router;

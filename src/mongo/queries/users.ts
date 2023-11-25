@@ -29,9 +29,11 @@ export const getUserbyUsername = async (username: string): Promise<User> => {
       if (result && result.username && result.username.length > 0) {
         resolve(result);
       } else {
-        reject(new MongoFindError("User not found"));
+        reject(new MongoFindError("Check username and password"));
       }
-    } catch (err) { }
+    } catch (err) {
+      reject(err);
+     }
   })
 };
 //get user infor and remove password, birthdate, and email for public profile

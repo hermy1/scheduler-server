@@ -4,7 +4,8 @@ export enum AppointmentStatus {
         Pending = "pending",
         Accepted = "accepted",
         Rejected = "declined",
-        Cancelled = "cancelled"
+        Cancelled = "cancelled",
+        Completed = "completed"
 }
 
 //guest professor
