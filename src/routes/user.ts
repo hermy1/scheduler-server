@@ -193,8 +193,7 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
     try {
       user = await getUserbyUsername(username);
     } catch (err) {
-      res.json({ message: 'Username is incorrect try again' });
-      return;
+      throw new UnauthorizedError('Username is incorrect try again');  
     }
     const isPasswordCorrect = bycrpt.compareSync(password, user.password);
     if (isPasswordCorrect) {
@@ -206,7 +205,7 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
       let userInfo = await getUserInfo(req.session.Me._id);
       res.json({ success: true, user: userInfo });
     } else {
-      res.json({ message: "Password is incorrect try again" });
+      throw new UnauthorizedError('Password is incorrect try again');
     }
   } catch (err) {
     next(err);
