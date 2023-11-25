@@ -296,7 +296,6 @@ router.post(
           me.username = user.username;
           me.role = user.role;
           req.session.Me = me;
-          //TODO:set isVerified to true
           //user role and userid, username send back to front end
           res.json({ message: "Your code matches", user: me });
           //can then change password
