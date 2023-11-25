@@ -366,8 +366,7 @@ router.post(
       let newPassword2 = req.body.newPassword2.toString();
       if (me) {
         if (newPassword1 == newPassword2) {
-          let passcomplexity = await checkPasswordComplexity(newPassword1);
-          if (passcomplexity) {
+
             let userId = (await getUserbyUsername(me.username))._id;
             let update = await resetPassword(userId.toString(), newPassword1);
             if (update) {
@@ -380,12 +379,7 @@ router.post(
                 "Something went wrong with reseting your password"
               );
             }
-          } else {
-            res.json({
-              message: "Your password doesn't meet the requirements",
-            });
-            throw new Error("Password is not complex enough");
-          }
+          
         } else {
           res.json({ message: "Your passwords don't match" });
           throw new Error("Passwords do not match");
@@ -411,8 +405,7 @@ router.post(
       const newPassword2 = req.body.newpassword2.toString();
       if (me) {
         if (newPassword1 == newPassword2) {
-          let complexity = await checkPasswordComplexity(newPassword1);
-          if (complexity) {
+
             let userId = (await getUserbyUsername(me.username))._id;
             let insertPassword = await changePassword(
               me.username,
@@ -437,10 +430,7 @@ router.post(
               "The password doesn't meet the requirements"
             );
           }
-        } else {
-          res.json({ message: "The passwords don't match" });
-          throw new BadRequestError("The passwords don't match");
-        }
+      
       } else {
         res.json({ message: "You are not authorized" });
         throw new UnauthorizedError(`You are not authorized`);
