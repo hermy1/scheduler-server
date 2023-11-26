@@ -155,7 +155,6 @@ router.put('/updateinfo', async (req: Request, res: Response, next: NextFunction
         if(result){
           res.json({ message: "Student Profile updated successfully", result });
         } else {
-          res.json({ message: "Something went wrong when updating user" });
           throw new MongoInsertError("Something went wrong when updating user");
         }
       } else if(role === UserRole.Professor){
@@ -168,17 +167,15 @@ router.put('/updateinfo', async (req: Request, res: Response, next: NextFunction
         user.isVerified = true;  
         const result = await updateUserInfo(user);
         if(result){
-          res.json({ message: "Professor Profile updated successfully", result });
+          res.json({ success: true,  message: "Profile updated successfully"});
         } else {
-          res.json({ message: "Something went wrong when updating user" });
           throw new MongoInsertError("Something went wrong when updating user");
         }
       } else {
-        res.json({ message: "Role does not exist" });
         throw new MongoInsertError("Role does not exist");
       }
     } else {
-      res.json({ message: "This is strange, but you don't exist here, signup" });
+      res.status(404).json({ message: "This is strange, but you don't exist here, signup" });
       throw new MongoInsertError("User does not exist");
     }
   } catch (err) {
@@ -296,28 +293,28 @@ router.post(
               user.isVerified = true;
               const result = await updateUserInfo(user);
               if(result){
-                   let me = new Me();
+            let me = new Me();
           me.username = user.username;
           me.role = user.role;
+          me._id = user._id;
           req.session.Me = me;
           //user role and userid, username send back to front end
-          res.json({ message: "Your code matches", user: me });
+          res.json({ message: "Your code matches", user: me }); 
           //can then change password
               } else{
-                throw new Error("Something went wrong while verifying user");
-
+                throw new ServerError("Something went wrong while verifying user"); 
               }
        
         } else{
-          throw new Error("That user does not exist");
+          throw new NotFoundError("That user does not exist");  
         }
         }else {
-          res.json({ message: "The code is not correct" });
-          throw new Error("That code is not correct");
+         
+          throw new BadRequestError("That code is not correct");
         }
       } else {
-        res.json({ message: "Invalid information" });
-        throw new Error("Invalid information");
+      
+        throw new BadRequestError("Invalid information");
       }
     } catch (err) {
       next(err);
@@ -336,7 +333,7 @@ router.post(
         if (email == user.email) {
           let sendCode = await resendEmailAuthCode(user._id.toString(), email);
           if (sendCode) {
-            res.json({ message: "You code was successfully resent" });
+            res.json({ message: "You code was successfully resent", user: user });
           } else {
             res.json({ message: "Could not resend code" });
             throw new Error("Could not resend code");
