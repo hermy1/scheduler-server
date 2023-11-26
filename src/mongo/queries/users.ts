@@ -33,7 +33,7 @@ export const getUserbyUsername = async (username: string): Promise<User> => {
       }
     } catch (err) {
       reject(err);
-     }
+    }
   })
 };
 //get user infor and remove password, birthdate, and email for public profile
@@ -64,8 +64,8 @@ export const getUserInfo = async (userId: ObjectId): Promise<PublicUser> => {
       } else {
         reject(new MongoFindError("User not found"));
       }
-    } catch (err) { 
-     reject(err);
+    } catch (err) {
+      reject(err);
     }
   })
 };
@@ -80,7 +80,7 @@ export const getUserbyEmail = async (email: string): Promise<User> => {
       } else {
         reject(new MongoFindError("User not found"));
       }
-    } catch (err) { 
+    } catch (err) {
       reject(err);
     }
   })
@@ -97,7 +97,7 @@ export const getUserbyId = async (userId: string): Promise<User> => {
       } else {
         reject(new MongoFindError("User not found"));
       }
-    } catch (err) { 
+    } catch (err) {
       reject(err);
     }
   })
@@ -123,12 +123,12 @@ export const checkIfUserExists = async (username: string): Promise<boolean> => {
 
 //check if email exists
 export const checkIfEmailExists = async (email: string): Promise<boolean> => {
-  return new Promise (async (resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       let db = await getDB();
       const collection = db.collection<User>("users");
       const result = await collection.findOne({ email: email });
-      if(result && result.email && result.email.length > 0) {
+      if (result && result.email && result.email.length > 0) {
         resolve(true);
       } else {
         resolve(false);
@@ -180,7 +180,7 @@ export const getAdvisorbyProfesserId = async (professorId: ObjectId): Promise<Ad
       } else {
         reject(new MongoFindError("Professor Not Found"));
       }
-    } catch (err) { 
+    } catch (err) {
       reject(err);
     }
   })
@@ -198,7 +198,7 @@ export const AdvisorbyProfesserId = async (professorId: ObjectId): Promise<boole
       }
     } catch (err) {
       reject(err);
-     }
+    }
   })
 };
 
@@ -219,14 +219,15 @@ export const getUpcomingMeetings = async (student: ObjectId, status: Appointment
           pipeline: [
             // checking for student appointment & status accepted
             // TODO: only show appointments with future dates
-            { $match: { 
+            {
+              $match: {
                 $and: [
                   { $expr: { $eq: ['$student', '$$id'] } },
                   { $expr: { $eq: ['$status', status] } },
                   { $expr: { $eq: ['$studentCancelled', false] } }, // Ensure studentCancelled is false
                   { $expr: { $gt: ['$startDateTime', new Date()] } }, // Only show appointments with future dates
                 ]
-              } 
+              }
             },
           ],
           as: 'appointment',
@@ -415,7 +416,7 @@ export const getProfessorsAdvisorsByUserIdButOne = async (
         let db = await getDB();
         const usersCollection = db.collection<User>('users');
         const allProfiles = await usersCollection.find({ _id: { $in: all.map(id => new ObjectId(id)) } }).toArray();
-       
+
 
 
         resolve(allProfiles);
@@ -434,19 +435,19 @@ export const getAllStudentsInClassByClassId = async (classId: ObjectId | string)
     try {
       const db = await getDB();
       const courseCollection = db.collection<Course>("courses");
-      const course = await courseCollection.findOne({_id: ensureObjectId(classId)});
-      if(course) {
+      const course = await courseCollection.findOne({ _id: ensureObjectId(classId) });
+      if (course) {
         const studentIds = course.students;
         const userCollection = db.collection<User>("users");
         const students = [];
-        for(let i=0; i<studentIds.length; i++) {
-          const student = await userCollection.findOne({_id: studentIds[i]});
-          if(student) {
+        for (let i = 0; i < studentIds.length; i++) {
+          const student = await userCollection.findOne({ _id: studentIds[i] });
+          if (student) {
             students[i] = student;
           }
         }
 
-        if(students) {
+        if (students) {
           resolve(students);
         }
 
@@ -474,9 +475,13 @@ export const getPastMeetings = async (student: ObjectId, status: AppointmentStat
           let: { id: "$_id" },
           pipeline: [
             // checking for student appointment & status accepted & any end date/time less than the current date/time
-            {$match:{ $and: [{$expr: { $eq: ['$student', '$$id'] }}, {$expr: {$eq: ['$status', status]}},
-            {$expr: {$lt: ['$endDateTime', new Date()]}} 
-          ]} },
+            {
+              $match: {
+                $and: [{ $expr: { $eq: ['$student', '$$id'] } }, { $expr: { $eq: ['$status', status] } },
+                { $expr: { $lt: ['$endDateTime', new Date()] } }
+                ]
+              }
+            },
           ],
           as: 'appointment',
         },
@@ -485,11 +490,28 @@ export const getPastMeetings = async (student: ObjectId, status: AppointmentStat
         $unwind: { path: '$appointment', preserveNullAndEmptyArrays: false },
       },
     ];
-    
+
     const result: AggregationCursor<Appointment> = collection.aggregate(pipeline);
     const appointmentArray: Appointment[] = await result.toArray();
     return appointmentArray;
   } catch (err) {
-    throw err; 
+    throw err;
   }
+};
+
+export const getPendingAppointmentsByProfessorId = async (professorId: ObjectId | string): Promise<Appointment[]> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const db = await getDB();
+      const appointmentCollection = db.collection<Appointment>("appointments");
+      const appointments = await appointmentCollection.find({professor: ensureObjectId(professorId), status: AppointmentStatus.Pending, studentCancelled: false}).toArray();
+      if(appointments) {
+        resolve(appointments);
+      } else {
+        reject(new MongoFindError("Could not find any appointment for the professor's given ID"));
+      }
+    } catch (err) {
+      throw err;
+    }
+  });
 };
