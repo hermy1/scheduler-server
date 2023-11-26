@@ -12,6 +12,7 @@ import {
   getAllProfessors,
   getAllStudents,
   getAllStudentsInClassByClassId,
+  getPendingAppointmentsByProfessorId,
   getUserbyUsername,
 } from "../mongo/queries/users";
 import {
@@ -33,6 +34,7 @@ import {
 import { updateAvailability } from "../mongo/mutations/availability";
 import { ObjectId } from "mongodb";
 import { AppointmentStatus } from "../models/appointment";
+import { MongoFindError } from "../core/errors/mongo";
 
 const router: Router = express.Router();
 
@@ -465,4 +467,23 @@ router.delete(
     }
   }
 );
+
+//get pending appointments by professor id
+router.get("/pendingAppointments", isLoggedIn, isProfessor, async(req: Request, res: Response, next: NextFunction) => {
+  try {
+    let professorId = req.query.id;
+    if(professorId) {
+      const appointments = await getPendingAppointmentsByProfessorId(professorId.toString());
+      if(appointments) {
+        res.json(appointments);
+      } else {
+        throw new BadRequestError("Something went wrong grabbing appointments for given professor ID");
+      }
+    } else {
+      throw new BadRequestError("URI must not be empty");
+    }
+  } catch (err) {
+    next(err)
+  }
+});
 export default router;
