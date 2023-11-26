@@ -47,7 +47,6 @@ export async function main(options: MainOptions) {
     app.use(
       cors({
         origin: config.corsOrigin,
-        //origin: ['http://localhost:19006'],
         credentials: true,
       })
     );

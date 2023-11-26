@@ -235,6 +235,11 @@ export const getUpcomingMeetings = async (student: ObjectId, status: Appointment
       {
         $unwind: { path: '$appointment', preserveNullAndEmptyArrays: false },
       },
+      {
+        $sort: {
+          'appointment.startDateTime': 1, // Sort by startDateTime in ascending order (earliest first)
+        },
+      },
     ];
 
     const result: AggregationCursor<Appointment> = collection.aggregate(pipeline);
