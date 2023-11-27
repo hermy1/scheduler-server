@@ -14,6 +14,7 @@ import {
   getProfessorsAdvisorsByUserIdButOne,
   getUserInfo,
   checkIfEmailExists,
+  getPastMeetings,
 } from "../mongo/queries/users";
 import {
   changePassword,
@@ -1010,5 +1011,28 @@ router.get(
       next(err);
     }
   })
+
+  router.get('/pastMeetings', isLoggedIn, async(req:Request, res:Response, next: NextFunction)=>{
+    try {
+      const me = req.session.Me;
+      if (me){
+        let userId = (await getUserbyUsername(me.username))._id;
+        const status = AppointmentStatus.Completed;
+      if(userId){
+        const meetings = await getPastMeetings(ensureObjectId(userId), status);
+      res.json(meetings);
+      } else {
+        res.json({message: "Something went wrong when getting previous meetings"});
+        throw new BadRequestError("Something went wrong when getting previous meetings");
+      } 
+  
+    } else {
+      res.json({message: "You are not authorized"});
+      throw new UnauthorizedError(`You are not authorized`);
+    }
+    } catch (err) {
+      next(err);
+    }
+  });
 
 export default router;
