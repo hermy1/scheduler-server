@@ -14,6 +14,7 @@ import {
   getProfessorsAdvisorsByUserIdButOne,
   getUserInfo,
   checkIfEmailExists,
+  getProfessorInfoByProfessorId,
 } from "../mongo/queries/users";
 import {
   changePassword,
@@ -1009,6 +1010,24 @@ router.get(
     } catch (err) {
       next(err);
     }
-  })
+  });
+
+  router.get("/professor-info", isLoggedIn, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const professorId = req.query.professorId;
+      if(professorId) {
+        const info = await getProfessorInfoByProfessorId(professorId.toString());
+        if(info) {
+          res.json(info);
+        } else {
+          throw new BadRequestError("Something went wrong grabbing the professr's info");
+        }
+      } else {
+        throw new BadRequestError("URI cannot be empty");
+      }
+    } catch (err) {
+      next(err);
+    }
+  });
 
 export default router;
