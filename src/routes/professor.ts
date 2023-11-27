@@ -471,16 +471,17 @@ router.delete(
 //get pending appointments by professor id
 router.get("/pendingAppointments", isLoggedIn, isProfessor, async(req: Request, res: Response, next: NextFunction) => {
   try {
-    let professorId = req.query.id;
-    if(professorId) {
-      const appointments = await getPendingAppointmentsByProfessorId(professorId.toString());
+    let me = req.session.Me;
+    if(me) {
+      let id = (await getUserbyUsername(me.username))._id;
+      const appointments = await getPendingAppointmentsByProfessorId(id);
       if(appointments) {
         res.json(appointments);
       } else {
         throw new BadRequestError("Something went wrong grabbing appointments for given professor ID");
       }
     } else {
-      throw new BadRequestError("URI must not be empty");
+      throw new UnauthorizedError("Unauthorized");
     }
   } catch (err) {
     next(err)
