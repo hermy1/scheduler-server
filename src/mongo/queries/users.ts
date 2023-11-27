@@ -515,3 +515,24 @@ export const getPendingAppointmentsByProfessorId = async (professorId: ObjectId 
     }
   });
 };
+
+export const getProfessorInfoByProfessorId = async (professorId: ObjectId | string): Promise<User> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const db = await getDB();
+      const userCollection = db.collection<User>("users");
+      const user = await userCollection.findOne({_id: ensureObjectId(professorId)});
+      if(user) {
+        if(user.role === UserRole.Professor) {
+          resolve(user);
+        } else {
+          reject(new MongoFindError("The given ID exists, but is not a professor ID"))
+        }
+      } else {
+        reject(new MongoFindError("Could not find a professor with the given ID"));
+      }
+    } catch (err) {
+      throw err;
+    }
+  });
+};
