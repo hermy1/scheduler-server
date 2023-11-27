@@ -902,7 +902,6 @@ router.post(
           res.json("Something went wrong and could not get a notification");
         }
       } else {
-        res.json({ message: "You are not authorized" });
         throw new UnauthorizedError(`You are not authorized`);
       }
     } catch (err) {
@@ -923,10 +922,9 @@ router.get(
         if (notifications) {
           res.json(notifications);
         } else {
-          res.json("Something went wrong and could not get notifications");
+          throw new BadRequestError(`Something went wrong and could not get notifications`);
         }
       } else {
-        res.json({ message: "You are not authorized" });
         throw new UnauthorizedError(`You are not authorized`);
       }
     } catch (err) {
@@ -948,16 +946,13 @@ router.get(
           if (getAppointment) {
             res.json(getAppointment);
           } else {
-            res.json(
-              "Something went wrong and could not retreieve the appointment"
-            );
+            throw new BadRequestError(`Could not get appointment`);
+
           }
         } else {
-          res.json({ message: "You did not send up an appointmentId" });
           throw new BadRequestError(`You did not send up an appointmentId`);
         }
       } else {
-        res.json({ message: "You are not authorized" });
         throw new UnauthorizedError(`You are not authorized`);
       }
     } catch (err) {
@@ -1000,7 +995,6 @@ router.get(
       if(me) {
         req.session.destroy((err) => {
           if(err) {
-            res.json({ message: "Something went wrong when logging out" });
             throw new UnauthorizedError(`Something went wrong when logging out`);
           } else {
             res.json({ succces:true, message: "You are logged out" });
@@ -1022,12 +1016,10 @@ router.get(
         const meetings = await getPastMeetings(ensureObjectId(userId), status);
       res.json(meetings);
       } else {
-        res.json({message: "Something went wrong when getting previous meetings"});
         throw new BadRequestError("Something went wrong when getting previous meetings");
       } 
   
     } else {
-      res.json({message: "You are not authorized"});
       throw new UnauthorizedError(`You are not authorized`);
     }
     } catch (err) {
