@@ -1,8 +1,10 @@
+import { AggregationCursor, ObjectId } from "mongodb";
 import { ensureObjectId, getDB } from "../../core/config/utils/mongohelper";
 import { MongoFindError, MongoInsertError } from "../../core/errors/mongo";
 import { Course } from "../../models/Course";
 import { Advisor } from "../../models/advisor";
-import { Appointment } from "../../models/appointment";
+import { Appointment, AppointmentStatus } from "../../models/appointment";
+import { User } from "../../models/user";
 
 export const UserInAdvisor = async (advisorId: string, userId: string): Promise<boolean> => {
     return new Promise(async (resolve, reject) => {
@@ -74,3 +76,37 @@ export const getAppointmentbyId = async (appId: string): Promise<Appointment> =>
         }
     })
 }
+
+export const getProfessorUpcomingMeetings = async (professor: ObjectId, status: AppointmentStatus): Promise<Appointment[]> => {
+    try {
+      const db = await getDB();
+      const collection = db.collection<User>('users');
+      const pipeline = [
+        {
+          $match: { _id: professor },
+        },
+        {
+          $lookup: {
+            from: 'appointments',
+            let: { id: "$_id" },
+            pipeline: [
+              // checking for professor appointment & status accepted
+              //TODO: only show appointments with future dates
+              { $match: { $and: [{ $expr: { $eq: ['$professor', '$$id'] } }, { $expr: { $eq: ['$status', status] } },
+                {$expr: {$gt:['$startDateTime', new Date()]}}] } },
+            ],
+            as: 'appointment',
+          },
+        },
+        {
+          $unwind: { path: '$appointment', preserveNullAndEmptyArrays: false },
+        },
+      ];
+
+      const result: AggregationCursor<Appointment> = collection.aggregate(pipeline);
+      const appointmentArray: Appointment[] = await result.toArray();
+      return appointmentArray;
+    } catch (err) {
+      throw err;
+    }
+  };
