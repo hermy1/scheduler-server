@@ -16,7 +16,7 @@ services:
     image: mongo
     ports:
       - "27017:27017"
-    command: mongod --auth --port 27017
+    command: mongod --auth 
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASS}
