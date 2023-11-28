@@ -33,6 +33,7 @@ import {
 import { updateAvailability } from "../mongo/mutations/availability";
 import { ObjectId } from "mongodb";
 import { AppointmentStatus } from "../models/appointment";
+import { getProfessorUpcomingMeetings } from "../mongo/queries/appointment";
 
 const router: Router = express.Router();
 
@@ -459,6 +460,39 @@ router.delete(
         }
       } else {
         throw new UnauthorizedError("Unauthorized");
+      }
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+router.get(
+  "/upcoming",
+  isLoggedIn,
+  isProfessor,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const me = req.session.Me;
+      if (me) {
+        let professorId = (await getUserbyUsername(me.username))._id;
+        const status = AppointmentStatus.Accepted;
+        if (professorId) {
+          const meetings = await getProfessorUpcomingMeetings(
+            ensureObjectId(professorId),
+            status
+          );
+          res.json(meetings);
+        } else {
+          res.json({
+            message: "Something went wrong when getting upcoming meetings",
+          });
+          throw new BadRequestError(
+            "Something went wrong when getting upcoming meetings"
+          );
+        }
+      } else {
+        res.json({ message: "You are not authorized" });
+        throw new UnauthorizedError(`You are not authorized`);
       }
     } catch (err) {
       next(err);
