@@ -15,6 +15,7 @@ import {
   getUserInfo,
   checkIfEmailExists,
   getProfessorInfoByProfessorId,
+  getPastMeetings,
 } from "../mongo/queries/users";
 import {
   changePassword,
@@ -355,7 +356,7 @@ router.post(
 
 //reset password after verifying with code
 router.post(
-  "/resetPassword",
+  "/reset-password",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const me = req.session.Me;
@@ -439,7 +440,7 @@ router.post(
 );
 
 router.post(
-  "/createAppointment",
+  "/create-appointment",
   isLoggedIn,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -532,7 +533,7 @@ router.post(
 );
 
 router.post(
-  "/cancelAppointment",
+  "/cancel-appointment",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const me = req.session.Me;
@@ -902,7 +903,6 @@ router.post(
           res.json("Something went wrong and could not get a notification");
         }
       } else {
-        res.json({ message: "You are not authorized" });
         throw new UnauthorizedError(`You are not authorized`);
       }
     } catch (err) {
@@ -923,10 +923,9 @@ router.get(
         if (notifications) {
           res.json(notifications);
         } else {
-          res.json("Something went wrong and could not get notifications");
+          throw new BadRequestError(`Something went wrong and could not get notifications`);
         }
       } else {
-        res.json({ message: "You are not authorized" });
         throw new UnauthorizedError(`You are not authorized`);
       }
     } catch (err) {
@@ -948,16 +947,13 @@ router.get(
           if (getAppointment) {
             res.json(getAppointment);
           } else {
-            res.json(
-              "Something went wrong and could not retreieve the appointment"
-            );
+            throw new BadRequestError(`Could not get appointment`);
+
           }
         } else {
-          res.json({ message: "You did not send up an appointmentId" });
           throw new BadRequestError(`You did not send up an appointmentId`);
         }
       } else {
-        res.json({ message: "You are not authorized" });
         throw new UnauthorizedError(`You are not authorized`);
       }
     } catch (err) {
@@ -1000,7 +996,6 @@ router.get(
       if(me) {
         req.session.destroy((err) => {
           if(err) {
-            res.json({ message: "Something went wrong when logging out" });
             throw new UnauthorizedError(`Something went wrong when logging out`);
           } else {
             res.json({ succces:true, message: "You are logged out" });
@@ -1025,6 +1020,27 @@ router.get(
       } else {
         throw new BadRequestError("URI cannot be empty");
       }
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.get('/pastMeetings', isLoggedIn, async(req:Request, res:Response, next: NextFunction)=>{
+    try {
+      const me = req.session.Me;
+      if (me){
+        let userId = (await getUserbyUsername(me.username))._id;
+        const status = AppointmentStatus.Completed;
+      if(userId){
+        const meetings = await getPastMeetings(ensureObjectId(userId), status);
+      res.json(meetings);
+      } else {
+        throw new BadRequestError("Something went wrong when getting previous meetings");
+      } 
+  
+    } else {
+      throw new UnauthorizedError(`You are not authorized`);
+    }
     } catch (err) {
       next(err);
     }
