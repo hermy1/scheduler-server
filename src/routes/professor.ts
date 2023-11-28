@@ -469,7 +469,7 @@ router.delete(
 );
 
 //get pending appointments by professor id
-router.get("/pendingAppointments", isLoggedIn, isProfessor, async(req: Request, res: Response, next: NextFunction) => {
+router.get("/pending-appointments", isLoggedIn, isProfessor, async(req: Request, res: Response, next: NextFunction) => {
   try {
     let me = req.session.Me;
     if(me) {
