@@ -354,7 +354,7 @@ router.post(
 
 //reset password after verifying with code
 router.post(
-  "/resetPassword",
+  "/reset-password",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const me = req.session.Me;
@@ -438,7 +438,7 @@ router.post(
 );
 
 router.post(
-  "/createAppointment",
+  "/create-appointment",
   isLoggedIn,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -531,7 +531,7 @@ router.post(
 );
 
 router.post(
-  "/cancelAppointment",
+  "/cancel-appointment",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const me = req.session.Me;
