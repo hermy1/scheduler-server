@@ -17,5 +17,5 @@ export interface Config {
     pass: string,
     subject_text:string,
 }
- corsOrigin: string;
+ corsOrigin: string[];
 }
