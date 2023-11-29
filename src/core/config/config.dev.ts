@@ -22,7 +22,7 @@ const config: Config = {
         pass: process.env.MAIL_PASS ?? '',
         subject_text: "Auth Code"
     },
-    corsOrigin: process.env.CORS_ORIGIN || ''
+    corsOrigin: (process.env.CORS_ORIGIN || '').split(',' ) 
 }
 
 export default config
