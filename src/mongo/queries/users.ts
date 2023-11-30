@@ -536,3 +536,28 @@ export const getProfessorInfoByProfessorId = async (professorId: ObjectId | stri
     }
   });
 };
+
+export const getClassesByProfessor = async (professorId: ObjectId | string, studentId: string | ObjectId): Promise<{ courseName: string; courseCode: string }[]> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let db = await getDB();
+      const collection = db.collection<Course>('courses');
+      const result = await collection.find({ students: ensureObjectId(studentId), professorId: ensureObjectId(professorId) }).toArray();
+      let classesList: { courseName: string; courseCode: string }[] = [];
+
+      if (result) {
+        for (let i = 0; i < result.length; i++) {
+          const course = result[i];
+          const { courseName, courseCode } = course;
+          classesList.push({ courseName, courseCode });
+        }
+
+        resolve(classesList);
+      } else {
+        resolve([]);
+      }
+    } catch (err) {
+      reject(err);
+    }
+  });
+};

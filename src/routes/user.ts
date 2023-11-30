@@ -16,6 +16,7 @@ import {
   checkIfEmailExists,
   getProfessorInfoByProfessorId,
   getPastMeetings,
+  getClassesByProfessor,
 } from "../mongo/queries/users";
 import {
   changePassword,
@@ -120,7 +121,7 @@ router.post('/register', async (req: Request, res: Response, next: NextFunction)
       }
     } else {
       res.status(400).json({ message: "It looks like you already have an account with us"});
-      throw new MongoInsertError("Email already exists");
+      //throw new MongoInsertError("Email already exists");
     }
   } catch (err) {
     next(err);
@@ -128,7 +129,7 @@ router.post('/register', async (req: Request, res: Response, next: NextFunction)
 }) 
 
 //add info to user (register flow)
-router.put('/updateinfo', async (req: Request, res: Response, next: NextFunction) => {
+router.put('/info', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { 
       userId,
@@ -188,14 +189,16 @@ router.put('/updateinfo', async (req: Request, res: Response, next: NextFunction
 //login
 router.post('/login', async (req: Request, res: Response, next: NextFunction) => {
   try {
+    console.log('hi');
     const { username, password } = req.body;
+    if(username && password){
+
+    
     let user: User;
-    try {
+
       user = await getUserbyUsername(username);
-    } catch (err) {
-      throw new NotFoundError('Username is incorrect try again');  
-    }
-    const isPasswordCorrect = bycrpt.compareSync(password, user.password);
+      if(user){
+          const isPasswordCorrect = bycrpt.compareSync(password, user.password);
     if (isPasswordCorrect) {
       let me = new Me();
       me.username = username;
@@ -205,7 +208,15 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
       let userInfo = await getUserInfo(req.session.Me._id);
       res.json({ success: true, user: userInfo });
     } else {
-      throw new NotFoundError('Password is incorrect try again'); 
+      throw new BadRequestError('Invalid username or password');
+    } 
+      } else {
+        throw new BadRequestError('Invalid username or password');
+      }
+
+  } else {
+    console.log('here');
+      throw new BadRequestError('Please enter a valid username and password');
     }
   } catch (err) {
     next(err);
@@ -1045,5 +1056,37 @@ router.get(
       next(err);
     }
   });
+
+  router.post(
+    "/classes-by-professor",
+    isLoggedIn,
+    isStudent,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const me = req.session.Me;
+        let professorId = req.body.professorId;
+  
+        if (me) {
+          if (professorId) {
+            let id = (await getUserbyUsername(me.username))._id;
+            let classes = await getClassesByProfessor(professorId,id);
+            if (classes) {
+              res.json(classes);
+            } else {
+              throw new BadRequestError("Something went wrong while getting professors");
+            }
+          } else {
+              throw new BadRequestError("pass up a valid professorId");
+          }
+        } else {
+          throw new UnauthorizedError(`You are not authorized`);
+        }
+  
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+  
 
 export default router;
