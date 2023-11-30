@@ -12,7 +12,9 @@ import {
   getAllProfessors,
   getAllStudents,
   getAllStudentsInClassByClassId,
+  getNotStudentsInAdvisorGroup,
   getPendingAppointmentsByProfessorId,
+  getStudentsInAdvisorGroup,
   getUserbyUsername,
 } from "../mongo/queries/users";
 import {
@@ -519,4 +521,70 @@ router.get(
     }
   }
 );
+
+router.get(
+  "/advisor-students",
+  isLoggedIn,
+  isProfessor,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const me = req.session.Me;
+
+      if (me) {
+        const advisorId = (await getUserbyUsername(me.username))._id;
+        
+        const users = await getStudentsInAdvisorGroup(
+          ensureObjectId(advisorId)
+        );
+        if(users){
+                  res.json(users);
+
+        }else {
+          throw new BadRequestError('Something went wrong getting students');
+        }
+
+      } else {
+        throw new UnauthorizedError(`You are not authorized`);
+      }
+    } catch (err) {
+      // You might want to log the error here for debugging purposes
+      next(err);
+    }
+  }
+);
+
+router.get(
+  "/advisor-students-new",
+  isLoggedIn,
+  isProfessor,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const me = req.session.Me;
+
+      if (me) {
+        const advisorId = (await getUserbyUsername(me.username))._id;
+        
+        const users = await getNotStudentsInAdvisorGroup(
+          ensureObjectId(advisorId)
+        );
+        if(users){
+                  res.json(users);
+
+        }else {
+          throw new BadRequestError('Something went wrong getting students');
+        }
+
+      } else {
+        throw new UnauthorizedError(`You are not authorized`);
+      }
+    } catch (err) {
+      // You might want to log the error here for debugging purposes
+      next(err);
+    }
+  }
+);
+
 export default router;
+
+
+

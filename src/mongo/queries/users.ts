@@ -561,3 +561,104 @@ export const getClassesByProfessor = async (professorId: ObjectId | string, stud
     }
   });
 };
+
+export const getStudentsInAdvisorGroup = async (
+  professorId: ObjectId | string,
+
+): Promise<User[]> => {
+  try {
+    let db = await getDB();
+
+    const advisorCollection = db.collection<Advisor>("advisors");
+    const userCollection = db.collection<User>('users');
+
+
+    const advisorId = ensureObjectId(professorId);
+
+    const pipeline = [
+      {
+        $match: {
+          professorId: advisorId,
+        },
+      },
+      {
+        $unwind: '$students',
+      },
+      {
+        $lookup: {
+          from: 'users', // Assuming the users collection is named 'users'
+          localField: 'students',
+          foreignField: '_id',
+          as: 'studentData',
+        },
+      },
+      {
+        $unwind: '$studentData',
+      },
+      {
+        $replaceRoot: { newRoot: '$studentData' },
+      },
+    ];
+
+
+    const result: AggregationCursor<User> = await advisorCollection.aggregate(pipeline);
+    const results: User[] = await result.toArray();
+
+    return results;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getNotStudentsInAdvisorGroup = async (
+  professorId: ObjectId | string
+): Promise<User[]> => {
+  try {
+    let db = await getDB();
+
+    const advisorCollection = db.collection<Advisor>('advisors');
+    const userCollection = db.collection<User>('users');
+
+    const advisorId = ensureObjectId(professorId);
+
+    const pipeline = [
+      {
+        $match: {
+          professorId: advisorId,
+        },
+      },
+      {
+        $unwind: '$students',
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'students',
+          foreignField: '_id',
+          as: 'studentData',
+        },
+      },
+      {
+        $unwind: '$studentData',
+      },
+      {
+        $replaceRoot: { newRoot: '$studentData' },
+      },
+    ];
+
+    const advisorResult: AggregationCursor<User> = await advisorCollection.aggregate(pipeline);
+    const advisorStudentsInGroup = await advisorResult.toArray();
+
+    // Get all students
+    const allStudents = await userCollection.find({ role: UserRole.Student }).toArray();
+
+    // Filter out students already in the advisor group
+    const notInAdvisorGroup = allStudents.filter(
+      (student) => !advisorStudentsInGroup.some((advisorStudent) => advisorStudent._id.equals(student._id))
+    );
+
+    return notInAdvisorGroup;
+  } catch (error) {
+    throw error;
+  }
+};
