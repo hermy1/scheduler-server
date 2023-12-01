@@ -16,6 +16,7 @@ import {
   checkIfEmailExists,
   getProfessorInfoByProfessorId,
   getPastMeetings,
+  getClassesByProfessor,
 } from "../mongo/queries/users";
 import {
   changePassword,
@@ -120,7 +121,7 @@ router.post('/register', async (req: Request, res: Response, next: NextFunction)
       }
     } else {
       res.status(400).json({ message: "It looks like you already have an account with us"});
-      throw new MongoInsertError("Email already exists");
+      //throw new MongoInsertError("Email already exists");
     }
   } catch (err) {
     next(err);
@@ -128,7 +129,7 @@ router.post('/register', async (req: Request, res: Response, next: NextFunction)
 }) 
 
 //add info to user (register flow)
-router.put('/updateinfo', async (req: Request, res: Response, next: NextFunction) => {
+router.put('/info', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { 
       userId,
@@ -189,13 +190,14 @@ router.put('/updateinfo', async (req: Request, res: Response, next: NextFunction
 router.post('/login', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { username, password } = req.body;
+    if(username && password){
+
+    
     let user: User;
-    try {
+
       user = await getUserbyUsername(username);
-    } catch (err) {
-      throw new NotFoundError('Username is incorrect try again');  
-    }
-    const isPasswordCorrect = bycrpt.compareSync(password, user.password);
+      if(user){
+          const isPasswordCorrect = bycrpt.compareSync(password, user.password);
     if (isPasswordCorrect) {
       let me = new Me();
       me.username = username;
@@ -205,7 +207,15 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
       let userInfo = await getUserInfo(req.session.Me._id);
       res.json({ success: true, user: userInfo });
     } else {
-      throw new NotFoundError('Password is incorrect try again'); 
+      throw new BadRequestError('Invalid username or password');
+    } 
+      } else {
+        throw new BadRequestError('Invalid username or password');
+      }
+
+  } else {
+    console.log('here');
+      throw new BadRequestError('Please enter a valid username and password');
     }
   } catch (err) {
     next(err);
@@ -464,7 +474,8 @@ router.post(
         reason = "";
       }
       if (me) {
-        let userId = await (await getUserbyUsername(me?.username))._id;
+        let user = await (await getUserbyUsername(me?.username));
+        let userId = user._id;
 
         if (professorId && startTime && endTime && advisor) {
           let createAppointent = await createAppointment(
@@ -480,6 +491,13 @@ router.post(
             //remove timeslot from database:
             let remove = await removeTimeSlot(professorId,timeArrayId,{startTime,endTime});
             if(remove){
+              //create notification for professor and guest
+              let message = `${user.firstName} ${user.lastName} scheduled an appointment with you`;
+              let n = await createNotification(professorId,"Appointment",message);
+              if(guestId){
+                let m = `${user.firstName} ${user.lastName} scheduled an appointment and you are a guest for it`;
+                let no = await createNotification(guestId,"Appointment",m);
+              }
               res.json(createAppointent);
 
             } else {
@@ -543,17 +561,24 @@ router.post(
       if (me) {
         let cancelApt = await cancelAppointment(appointmentId);
         if (cancelApt) {
+            //notifications
+            let apt = await getAppointmentbyId(appointmentId);
+            let user = await getUserbyUsername(me.username);
+            let mess = `${user.firstName} ${user.lastName} cancalled a meeting with you on ${apt.startDateTime}`
+            let not = await createNotification(apt.professor,'Cancalled',mess);
+            //check for guest
+            if(apt.guest){
+              let mess = `${user.firstName} ${user.lastName} cancalled a meeting with you where you were a guest on ${apt.startDateTime}`
+              let not = await createNotification(apt.guest._id,'Cancalled',mess);
+            }
+            
+
+
           res.json({ message: "Your appointment was successfully cancelled" });
         } else {
-          res.json({
-            message: "Something went wrong when cancelling your appointment",
-          });
-          throw new BadRequestError(
-            `Something went wrong when cancelling your appointment`
-          );
+          throw new BadRequestError("Something went wrong while cancelling your appointment");
         }
       } else {
-        res.json({ message: "You are not authorized" });
         throw new UnauthorizedError(`You are not authorized`);
       }
     } catch (err) {
@@ -1045,5 +1070,37 @@ router.get(
       next(err);
     }
   });
+
+  router.post(
+    "/classes-by-professor",
+    isLoggedIn,
+    isStudent,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const me = req.session.Me;
+        let professorId = req.body.professorId;
+  
+        if (me) {
+          if (professorId) {
+            let id = (await getUserbyUsername(me.username))._id;
+            let classes = await getClassesByProfessor(professorId,id);
+            if (classes) {
+              res.json(classes);
+            } else {
+              throw new BadRequestError("Something went wrong while getting professors");
+            }
+          } else {
+              throw new BadRequestError("pass up a valid professorId");
+          }
+        } else {
+          throw new UnauthorizedError(`You are not authorized`);
+        }
+  
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+  
 
 export default router;
