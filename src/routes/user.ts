@@ -189,7 +189,6 @@ router.put('/info', async (req: Request, res: Response, next: NextFunction) => {
 //login
 router.post('/login', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    console.log('hi');
     const { username, password } = req.body;
     if(username && password){
 
@@ -475,7 +474,8 @@ router.post(
         reason = "";
       }
       if (me) {
-        let userId = await (await getUserbyUsername(me?.username))._id;
+        let user = await (await getUserbyUsername(me?.username));
+        let userId = user._id;
 
         if (professorId && startTime && endTime && advisor) {
           let createAppointent = await createAppointment(
@@ -491,6 +491,13 @@ router.post(
             //remove timeslot from database:
             let remove = await removeTimeSlot(professorId,timeArrayId,{startTime,endTime});
             if(remove){
+              //create notification for professor and guest
+              let message = `${user.firstName} ${user.lastName} scheduled an appointment with you`;
+              let n = await createNotification(professorId,"Appointment",message);
+              if(guestId){
+                let m = `${user.firstName} ${user.lastName} scheduled an appointment and you are a guest for it`;
+                let no = await createNotification(guestId,"Appointment",m);
+              }
               res.json(createAppointent);
 
             } else {
@@ -554,17 +561,24 @@ router.post(
       if (me) {
         let cancelApt = await cancelAppointment(appointmentId);
         if (cancelApt) {
+            //notifications
+            let apt = await getAppointmentbyId(appointmentId);
+            let user = await getUserbyUsername(me.username);
+            let mess = `${user.firstName} ${user.lastName} cancalled a meeting with you on ${apt.startDateTime}`
+            let not = await createNotification(apt.professor,'Cancalled',mess);
+            //check for guest
+            if(apt.guest){
+              let mess = `${user.firstName} ${user.lastName} cancalled a meeting with you where you were a guest on ${apt.startDateTime}`
+              let not = await createNotification(apt.guest._id,'Cancalled',mess);
+            }
+            
+
+
           res.json({ message: "Your appointment was successfully cancelled" });
         } else {
-          res.json({
-            message: "Something went wrong when cancelling your appointment",
-          });
-          throw new BadRequestError(
-            `Something went wrong when cancelling your appointment`
-          );
+          throw new BadRequestError("Something went wrong while cancelling your appointment");
         }
       } else {
-        res.json({ message: "You are not authorized" });
         throw new UnauthorizedError(`You are not authorized`);
       }
     } catch (err) {
