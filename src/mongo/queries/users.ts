@@ -662,3 +662,55 @@ export const getNotStudentsInAdvisorGroup = async (
     throw error;
   }
 };
+export const getNotStudentsInCourse = async (
+  courseId: ObjectId | string
+): Promise<User[]> => {
+  try {
+    let db = await getDB();
+
+    const courseCollection = db.collection<Course>('courses');
+    const userCollection = db.collection<User>('users');
+
+    const courseIdObj = ensureObjectId(courseId);
+
+    const pipeline = [
+      {
+        $match: {
+          _id: courseIdObj,
+        },
+      },
+      {
+        $unwind: '$students',
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'students',
+          foreignField: '_id',
+          as: 'studentData',
+        },
+      },
+      {
+        $unwind: '$studentData',
+      },
+      {
+        $replaceRoot: { newRoot: '$studentData' },
+      },
+    ];
+
+    const courseResult: AggregationCursor<User> = await courseCollection.aggregate(pipeline);
+    const courseStudents = await courseResult.toArray();
+
+    // Get all students
+    const allStudents = await userCollection.find({ role: UserRole.Student }).toArray();
+
+    // Filter out students already in the course
+    const notInCourse = allStudents.filter(
+      (student) => !courseStudents.some((courseStudent) => courseStudent._id.equals(student._id))
+    );
+
+    return notInCourse;
+  } catch (error) {
+    throw error;
+  }
+};

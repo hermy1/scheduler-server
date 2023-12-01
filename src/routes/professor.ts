@@ -13,12 +13,14 @@ import {
   getAllStudents,
   getAllStudentsInClassByClassId,
   getNotStudentsInAdvisorGroup,
+  getNotStudentsInCourse,
   getPendingAppointmentsByProfessorId,
   getStudentsInAdvisorGroup,
   getUserbyUsername,
 } from "../mongo/queries/users";
 import {
   addStudentToAdvisor,
+  deleteCourseById,
   insertNewCourse,
   insertStudentCourse,
 } from "../mongo/mutations/professor";
@@ -591,7 +593,73 @@ router.get(
         throw new UnauthorizedError(`You are not authorized`);
       }
     } catch (err) {
-      // You might want to log the error here for debugging purposes
+      next(err);
+    }
+  }
+);
+
+router.get(
+  "/course-students-new",
+  isLoggedIn,
+  isProfessor,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const me = req.session.Me;
+      let courseId = req.query.courseId?.toString();
+
+      if (me) {
+        if(courseId){
+           const users = await getNotStudentsInCourse(courseId );
+        if(users){
+                  res.json(users);
+
+        }else {
+          throw new BadRequestError('Something went wrong getting students');
+        }
+        } else{
+          throw new BadRequestError("Send up valid courseId");
+        }
+        
+       
+
+      } else {
+        throw new UnauthorizedError(`You are not authorized`);
+      }
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+
+router.delete(
+  "/delete-course",
+  isLoggedIn,
+  isProfessor,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const me = req.session.Me;
+      let courseId = req.body.courseId?.toString();
+
+      if (me) {
+        if(courseId){
+           const course = await deleteCourseById(courseId );
+        if(course){
+                  res.json(course);
+
+        }else {
+          throw new BadRequestError('Something went wrong deleting course');
+        }
+        } else{
+          throw new BadRequestError("Send up valid courseId");
+        }
+        
+       
+
+      } else {
+        throw new UnauthorizedError(`You are not authorized`);
+      }
+    } catch (err) {
       next(err);
     }
   }
