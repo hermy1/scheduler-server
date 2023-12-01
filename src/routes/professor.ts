@@ -37,7 +37,8 @@ import { updateAvailability } from "../mongo/mutations/availability";
 import { ObjectId } from "mongodb";
 import { AppointmentStatus } from "../models/appointment";
 import { MongoFindError } from "../core/errors/mongo";
-import { getProfessorUpcomingMeetings } from "../mongo/queries/appointment";
+import { getAppointmentbyId, getProfessorUpcomingMeetings } from "../mongo/queries/appointment";
+import { createNotification } from "../mongo/mutations/notification";
 
 const router: Router = express.Router();
 
@@ -112,6 +113,9 @@ router.post(
             ensureObjectId(courseId),
             ensureObjectId(studentId)
           );
+          //add notification for student
+          let message = `${user.firstName} ${user.lastName} added you to a class`;
+          let not = await createNotification(studentId,"Added to course",message);
           res.json(course);
         } else {
           throw new UnauthorizedError("Unauthorized");
@@ -139,6 +143,9 @@ router.post(
           ensureObjectId(professorId),
           ensureObjectId(studentId)
         );
+        let user = await getUserbyUsername(me.username);
+        let message = `${user.firstName} ${user.lastName} added you to their advising group`;
+        let not = await createNotification(studentId,"Added to advisor group",message);
         res.json(addStudent);
       } else {
         throw new UnauthorizedError("Unauthorized");
@@ -258,14 +265,17 @@ router.post(
           appointmentLocation
         );
         if (updatedAppointment) {
+          //add notification for student
+          let user = await getUserbyUsername(me.username);
+          let apt = await getAppointmentbyId(appointmentId);
+          let message = `${user.firstName} ${user.lastName} updated a meeting status to: ${appointmentStatus}`;
+          let not = await createNotification(apt.student,"Appointment status updated", message);
           res.json({
             message: "Appointment Status Successfully Updated",
             appointment: updatedAppointment,
           });
         } else {
-          res.json({
-            message: "Something went wrong when updating appointment",
-          });
+ 
           throw new Error("Something went wrong when updating appointment");
         }
       }
@@ -288,12 +298,15 @@ router.post(
 
         let add = await addSummary(appointmentId, summary);
         if (add) {
+          let user = await getUserbyUsername(me.username);
+          let message = `${user.firstName} ${user.lastName} added a summary to a past meeting`;
+          let apt = await getAppointmentbyId(appointmentId);
+          let not = await createNotification(apt.student,"Summary added",message);
+
           res.json(add);
         } else {
-          res.json({
-            message: "Something went wrong when adding summary to appointment",
-          });
-          throw new Error(
+    
+          throw new BadRequestError(
             "Something went wrong when adding summary to appointment"
           );
         }
