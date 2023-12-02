@@ -1,4 +1,4 @@
-import { ObjectId } from "mongodb";
+import { DeleteResult, ObjectId } from "mongodb";
 import { ensureObjectId, getDB } from "../../core/config/utils/mongohelper";
 import { MongoFindError, MongoInsertError, MongoUpdateError } from "../../core/errors/mongo";
 import {Course} from "../../models/Course";
@@ -171,3 +171,22 @@ export const addStudentToAdvisor = async (professorId: ObjectId, studentId: Obje
       }
     });
   }
+
+export const deleteCourseById = async (courseId: ObjectId | string): Promise<boolean> => {
+  try {
+    let db = await getDB(); // Assuming getDB is a valid function that returns a MongoDB database instance
+
+    const courseCollection = db.collection<Course>('courses');
+    const courseIdObj = ensureObjectId(courseId);
+
+    const deleteResult = await courseCollection.deleteOne({ _id: courseIdObj });
+    if(deleteResult.deletedCount>0){
+      return true;
+    } else {
+      return false;
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
