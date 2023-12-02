@@ -17,6 +17,8 @@ import {
   getProfessorInfoByProfessorId,
   getPastMeetings,
   getClassesByProfessor,
+  getFilteredStudents,
+  getFilteredStudentsCount,
 } from "../mongo/queries/users";
 import {
   changePassword,
@@ -248,8 +250,19 @@ router.get(
   isProfessor,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const students = await getAllStudents();
-      res.json(students);
+      const page = req.query.page?.toString() || 0;
+      const search = req.query.search?.toString() || "";      
+      const limit = req.query.limit?.toString() || 10;
+
+      const editedPage = typeof (page) === "string" ? parseInt(page) : page; 
+      const editedLimit = typeof (limit) === "string" ? parseInt(limit) : limit; 
+      const filter = { search, page: editedPage, limit: editedLimit };
+
+
+      const data = await getFilteredStudents(filter);
+      const total = await getFilteredStudentsCount(filter);
+
+      res.json({ success: true, data: { students: data, total } });
     } catch (err) {
       next(err);
     }

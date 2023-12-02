@@ -12,6 +12,8 @@ import {
   getAllProfessors,
   getAllStudents,
   getAllStudentsInClassByClassId,
+  getFilteredStudentsInAdvisorGroup,
+  getFilteredStudentsInAdvisorGroupCount,
   getNotStudentsInAdvisorGroup,
   getPendingAppointmentsByProfessorId,
   getStudentsInAdvisorGroup,
@@ -542,15 +544,28 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const me = req.session.Me;
+      const page = req.query.page?.toString() || 0;
+      const search = req.query.search?.toString() || "";      
+      const limit = req.query.limit?.toString() || 10;
 
       if (me) {
         const advisorId = (await getUserbyUsername(me.username))._id;
+
+
+
+  
+        const editedPage = typeof (page) === "string" ? parseInt(page) : page; 
+        const editedLimit = typeof (limit) === "string" ? parseInt(limit) : limit; 
+        const filter = { search, page: editedPage, limit: editedLimit };
+  
+
+
         
-        const users = await getStudentsInAdvisorGroup(
-          ensureObjectId(advisorId)
-        );
+        const users = await getFilteredStudentsInAdvisorGroup(ensureObjectId(advisorId),filter);
+        const total = await getFilteredStudentsInAdvisorGroupCount(ensureObjectId(advisorId),filter);
+
         if(users){
-                  res.json(users);
+          res.json({ success: true, data: { students: users, total } });
 
         }else {
           throw new BadRequestError('Something went wrong getting students');

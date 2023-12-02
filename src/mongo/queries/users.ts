@@ -154,6 +154,72 @@ export const getAllStudents = async (): Promise<User[]> => {
   })
 };
 
+export const getFilteredStudents = async (filter: { search: string, page: number, limit: number}): Promise<User[]> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let db = await getDB();
+      const collection = db.collection<User>("users");
+
+      let query: {} = {
+        $and: [
+          {
+            $or: [
+              { username: { $regex: filter.search, $options: 'i' } },
+              { lastName: { $regex: filter.search, $options: 'i' } },
+              { firstName: { $regex: filter.search, $options: 'i' } }
+            ]
+          },
+          { role: UserRole.Student }
+        ]
+      };
+                  
+      const offset = filter.page * filter.limit;
+
+      const results = await collection.find(query).skip(offset).limit(filter.limit).toArray();
+
+        resolve(results);
+    
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+export const getFilteredStudentsCount = async (filter: { search: string, page: number, limit: number}): Promise<number> => {
+  return new Promise(async (resolve, reject) => {
+      try {
+          let db = await getDB();
+          const collection = await db.collection<User>('users');
+
+          let query: {} = {
+            $and: [
+              {
+                $or: [
+                  { username: { $regex: filter.search, $options: 'i' } },
+                  { lastName: { $regex: filter.search, $options: 'i' } },
+                  { firstName: { $regex: filter.search, $options: 'i' } }
+                ]
+              },
+              { role: UserRole.Student }
+            ]
+          };
+          const offset = filter.page * filter.limit;
+
+          const results = await collection.countDocuments(query);
+
+          if (results || results === 0) {
+              resolve(results);
+          } else {
+              throw new MongoFindError(`Something went wrong while retriving students count`);
+          }
+
+
+      } catch (err: any) {
+          reject(err);
+      }
+  });
+};
+
 
 //get all professors
 export const getAllProfessors = async (): Promise<User[]> => {
@@ -609,6 +675,134 @@ export const getStudentsInAdvisorGroup = async (
     throw error;
   }
 };
+
+export const getFilteredStudentsInAdvisorGroup = async (
+  professorId: ObjectId | string,
+  filter: { search: string, page: number, limit: number }
+): Promise<User[]> => {
+  try {
+    let db = await getDB();
+
+    const advisorCollection = db.collection<Advisor>('advisors');
+    const userCollection = db.collection<User>('users');
+
+    const advisorId = ensureObjectId(professorId);
+
+    const pipeline = [
+      {
+        $match: {
+          professorId: advisorId,
+        },
+      },
+      {
+        $unwind: '$students',
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'students',
+          foreignField: '_id',
+          as: 'studentData',
+        },
+      },
+      {
+        $unwind: '$studentData',
+      },
+      {
+        $replaceRoot: { newRoot: '$studentData' },
+      },
+      {
+        $match: {
+          $or: [
+            { username: { $regex: filter.search, $options: 'i' } },
+            { lastName: { $regex: filter.search, $options: 'i' } },
+            { firstName: { $regex: filter.search, $options: 'i' } },
+          ],
+        },
+      },
+      {
+        $skip: filter.page * filter.limit,
+      },
+      {
+        $limit: filter.limit,
+      },
+    ];
+
+    const result: AggregationCursor<User> = await advisorCollection.aggregate(pipeline);
+    const results: User[] = await result.toArray();
+
+    return results;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getFilteredStudentsInAdvisorGroupCount = async (
+  professorId: ObjectId | string,
+  filter: { search: string, page: number, limit: number }
+): Promise<number> => {
+  try {
+    let db = await getDB();
+
+    const advisorCollection = db.collection<Advisor>('advisors');
+    const userCollection = db.collection<User>('users');
+
+    const advisorId = ensureObjectId(professorId);
+
+    const pipeline = [
+      {
+        $match: {
+          professorId: advisorId,
+        },
+      },
+      {
+        $unwind: '$students',
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'students',
+          foreignField: '_id',
+          as: 'studentData',
+        },
+      },
+      {
+        $unwind: '$studentData',
+      },
+      {
+        $replaceRoot: { newRoot: '$studentData' },
+      },
+      {
+        $match: {
+          $or: [
+            { username: { $regex: filter.search, $options: 'i' } },
+            { lastName: { $regex: filter.search, $options: 'i' } },
+            { firstName: { $regex: filter.search, $options: 'i' } },
+          ],
+        },
+      },
+      {
+        $skip: filter.page * filter.limit,
+      },
+      {
+        $limit: filter.limit,
+      },
+    ];
+
+    const result: AggregationCursor<User> = await advisorCollection.aggregate(pipeline);
+    const results: User[] = await result.toArray();
+
+    return results.length;
+  } catch (error) {
+    throw error;
+  }
+};
+
+
+
+
+
+
 
 export const getNotStudentsInAdvisorGroup = async (
   professorId: ObjectId | string
