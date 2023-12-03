@@ -390,7 +390,7 @@ router.post(
           const professorId = user._id;
           const weekDay = req.body.weekDay;
           const date = req.body.date;
-          const timeSlots = req.body.timeSlots;
+          const timeSlots = req.body.newTimeSlots;
           const availability = await insertAvailability(
             ensureObjectId(professorId),
             weekDay,
@@ -404,7 +404,9 @@ router.post(
       } else {
         throw new UnauthorizedError("Unauthorized");
       }
-    } catch (err) {}
+    } catch (err) {
+      next(err);
+    }
   }
 );
 
