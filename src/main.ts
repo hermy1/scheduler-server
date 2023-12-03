@@ -50,6 +50,8 @@ export async function main(options: MainOptions) {
         credentials: true,
       })
     );
+  console.log(        config.corsOrigin
+);
     //set session
     app.use(sess);
     

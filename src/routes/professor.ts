@@ -41,7 +41,7 @@ import { updateAvailability } from "../mongo/mutations/availability";
 import { ObjectId } from "mongodb";
 import { AppointmentStatus } from "../models/appointment";
 import { MongoFindError } from "../core/errors/mongo";
-import { getAppointmentbyId, getProfessorUpcomingMeetings } from "../mongo/queries/appointment";
+import {getAppointmentByGuestId, getAppointmentbyId, getProfessorUpcomingMeetings} from "../mongo/queries/appointment";
 import { createNotification } from "../mongo/mutations/notification";
 
 const router: Router = express.Router();
@@ -678,6 +678,36 @@ router.delete(
       next(err);
     }
   }
+);
+
+router.post(
+    "/guest-appointments",
+    isLoggedIn,
+    isProfessor,
+    async(req: Request, res: Response, next: NextFunction) => {
+      try {
+
+        const me = req.session.Me;
+
+        if (me) {
+          let guestId = (await getUserbyUsername(me.username))._id;
+          if (guestId) {
+            let guestAppointments = await getAppointmentByGuestId(guestId)
+            if (guestAppointments.length > 0) {
+              res.json(guestAppointments);
+            } else {
+              res.json([]);
+            }
+          } else {
+            throw new UnauthorizedError(`You are not authorized`);
+          }
+        } else {
+          throw new UnauthorizedError(`You are not authorized`);
+        }
+      } catch (err) {
+        next(err);
+      }
+    }
 );
 
 export default router;

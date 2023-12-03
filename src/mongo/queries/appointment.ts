@@ -1,10 +1,10 @@
-import { AggregationCursor, ObjectId } from "mongodb";
-import { ensureObjectId, getDB } from "../../core/config/utils/mongohelper";
-import { MongoFindError, MongoInsertError } from "../../core/errors/mongo";
-import { Course } from "../../models/Course";
-import { Advisor } from "../../models/advisor";
-import { Appointment, AppointmentStatus } from "../../models/appointment";
-import { User } from "../../models/user";
+import {AggregationCursor, ObjectId} from "mongodb";
+import {ensureObjectId, getDB} from "../../core/config/utils/mongohelper";
+import {MongoFindError} from "../../core/errors/mongo";
+import {Course} from "../../models/Course";
+import {Advisor} from "../../models/advisor";
+import {Appointment, AppointmentStatus} from "../../models/appointment";
+import {User} from "../../models/user";
 
 export const UserInAdvisor = async (advisorId: string, userId: string): Promise<boolean> => {
     return new Promise(async (resolve, reject) => {
@@ -110,3 +110,26 @@ export const getProfessorUpcomingMeetings = async (professor: ObjectId, status: 
       throw err;
     }
   };
+
+export const getAppointmentByGuestId = async (guestId: ObjectId): Promise<Appointment[]> => {
+    return new Promise(async (resolve, reject) => {
+        try {
+
+            let db = await getDB();
+            const appointmentCollection = db.collection<Appointment>('appointments');
+            const appointmentsWithGuestId = await appointmentCollection.find({
+                'guest._id': new ObjectId(guestId),
+                'status': AppointmentStatus.Accepted,
+                'studentCancelled': false,
+                'startDateTime': { $gt: new Date() }
+            }).toArray();
+            if (appointmentsWithGuestId.length === 0) {
+                resolve([]);
+            } else {
+                resolve(appointmentsWithGuestId);
+            }
+        } catch (err: any) {
+            reject(err);
+        }
+    });
+};
