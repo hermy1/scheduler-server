@@ -688,9 +688,9 @@ router.post(
       try {
 
         const me = req.session.Me;
-        const guestId = me?._id;
 
         if (me) {
+          let guestId = (await getUserbyUsername(me.username))._id;
           if (guestId) {
             let guestAppointments = await getAppointmentByGuestId(guestId)
             if (guestAppointments.length > 0) {
