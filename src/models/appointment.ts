@@ -29,5 +29,5 @@ export class Appointment {
     summary?: string = ""; // short description/summary of the appointment
     createdAt: Date = new Date();
     updatedAt: Date = new Date();
-    studentCancelled: boolean= false; //true if they decide to cancel the meeting
+    studentCancelled: boolean = false; //true if they decide to cancel the meeting
 }
