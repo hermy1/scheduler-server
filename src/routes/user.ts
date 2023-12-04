@@ -42,7 +42,7 @@ import {
   cancelAppointment,
   createAppointment,
 } from "../mongo/mutations/appointment";
-import { getAppointmentbyId } from "../mongo/queries/appointment";
+import { getAppointmentbyId, getPendingOrAcceptedAppsByUserId } from "../mongo/queries/appointment";
 import { ensureObjectId } from "../core/config/utils/mongohelper";
 import { AppointmentStatus } from "../models/appointment";
 import { ObjectId } from "mongodb";
@@ -1114,6 +1114,26 @@ router.get(
       }
     }
   );
+
+  router.get("/pending-user-appointments", isLoggedIn, isStudent, 
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const me = req.session.Me;
+      if(me) {
+        let userId = (await getUserbyUsername(me.username))._id;
+        let pendingAppointments = await getPendingOrAcceptedAppsByUserId(ensureObjectId(userId.toString()));
+        if(pendingAppointments.length !== 0) {
+          res.json(pendingAppointments);
+        } else {
+          res.json({data: "No pending appointments found for given userId"});
+        } 
+      } else {
+        throw new BadRequestError("URI Must not be empty");
+      }
+    } catch(err) {
+      next(err);
+    }
+  });
   
 
 export default router;
