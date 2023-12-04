@@ -8,6 +8,11 @@ import { ObjectId } from "mongodb";
 export class TimeSlot {
     startTime: Date = new Date();
     endTime: Date = new Date();
+
+    constructor(startTime: Date, endTime: Date) {
+      this.startTime = startTime;
+      this.endTime = endTime;
+  }
 }
 export class Availability {
     _id: ObjectId = new ObjectId();
