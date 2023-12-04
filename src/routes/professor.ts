@@ -24,7 +24,7 @@ import {
   addStudentToAdvisor,
   deleteCourseById,
   insertNewCourse,
-  insertStudentCourse,
+  insertStudentCourse, removeStudentFromAdvisor,
 } from "../mongo/mutations/professor";
 import {
   insertAvailability,
@@ -712,6 +712,31 @@ router.post(
     }
 );
 
+router.post(
+    "/remove-student",
+    isLoggedIn,
+    isProfessor,
+    async(req: Request, res: Response, next: NextFunction) => {
+      try {
+        const me = req.session.Me
+        const studentId = req.body.studentId;
+        if(me){
+          let professorId = (await getUserbyUsername(me.username))._id;
+          let deleteStudent = await removeStudentFromAdvisor(ensureObjectId(professorId), ensureObjectId(studentId));
+          if (deleteStudent){
+            res.json(deleteStudent);
+          } else {
+            //res.json("Student Not Found");
+            throw new BadRequestError('Student not found');
+          }
+        } else {
+          throw new UnauthorizedError(`You are not authorized`);
+        }
+      } catch (err) {
+        next(err)
+      }
+    }
+)
 export default router;
 
 
