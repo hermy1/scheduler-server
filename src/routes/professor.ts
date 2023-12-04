@@ -726,7 +726,8 @@ router.post(
           if (deleteStudent){
             res.json(deleteStudent);
           } else {
-            res.json("Student Not Found");
+            //res.json("Student Not Found");
+            throw new BadRequestError('Student not found');
           }
         } else {
           throw new UnauthorizedError(`You are not authorized`);
