@@ -4,7 +4,7 @@ import { ensureObjectId, getDB } from "../../core/config/utils/mongohelper";
 import { MongoInsertError } from "../../core/errors/mongo";
 
   //insert avilaibility
-  export const insertAvailability = async (professorId: ObjectId, weekDay: string, date: Date, timeSlots: []): Promise <Availability> => {
+  export const insertAvailability = async (professorId: ObjectId, weekDay: string, date: Date, timeSlots: { startTime: string, endTime: string } []): Promise <Availability> => {
     return new Promise (async (resolve, reject)=>{
       try {
         let db = await getDB();
@@ -13,9 +13,12 @@ import { MongoInsertError } from "../../core/errors/mongo";
         newAvailability.professorId = professorId;
         newAvailability.weekDay = weekDay;
         newAvailability.date = date;
-        newAvailability.timeSlots =  Array.isArray(timeSlots) ? timeSlots : JSON.parse(timeSlots);
+        // newAvailability.timeSlots =  Array.isArray(timeSlots) ? timeSlots : JSON.parse(timeSlots);
+        newAvailability.timeSlots = Array.isArray(timeSlots) 
+        ? timeSlots.map(slot => new TimeSlot(new Date(slot.startTime), new Date(slot.endTime))) 
+        : JSON.parse(timeSlots).map((slot: { startTime: string | number | Date; endTime: string | number | Date; }) => new TimeSlot(new Date(slot.startTime), new Date(slot.endTime)));
         let result = await availabilityCollection.insertOne(newAvailability);
-        if (result.acknowledged){
+        if (result.acknowledged){ 
           resolve(newAvailability);
         } else {
           throw new MongoInsertError("Something went wrong while inserting availability into availability table");
