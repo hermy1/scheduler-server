@@ -133,3 +133,29 @@ export const getAppointmentByGuestId = async (guestId: ObjectId): Promise<Appoin
         }
     });
 };
+
+export const getPendingOrAcceptedAppsByUserId = async (userId: ObjectId): Promise<Appointment[]> => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let db = await getDB();
+            const appointmentCollection = db.collection<Appointment>('appointments');
+            const pendingAppointments = await appointmentCollection.find({
+                _id: ensureObjectId(userId),
+                status: AppointmentStatus.Pending || AppointmentStatus.Accepted,
+                studentCancelled: false,
+                summary: "", //ensure that the appointment is not finished, meaning accepted with an appointment
+            }).toArray();
+            
+            if(pendingAppointments.length === 0) {
+                resolve([]);
+            } else {
+                resolve(pendingAppointments);
+            }
+
+        } catch (err: any) {
+            reject(err);
+        }
+    });
+};
+
+
