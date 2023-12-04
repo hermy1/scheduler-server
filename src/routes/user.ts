@@ -1118,8 +1118,9 @@ router.get(
   router.get("/pending-user-appointments", isLoggedIn, isStudent, 
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = req.query.userId;
-      if(userId) {
+      const me = req.session.Me;
+      if(me) {
+        let userId = (await getUserbyUsername(me.username))._id;
         let pendingAppointments = await getPendingOrAcceptedAppsByUserId(ensureObjectId(userId.toString()));
         if(pendingAppointments.length !== 0) {
           res.json(pendingAppointments);

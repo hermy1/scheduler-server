@@ -140,7 +140,7 @@ export const getPendingOrAcceptedAppsByUserId = async (userId: ObjectId): Promis
             let db = await getDB();
             const appointmentCollection = db.collection<Appointment>('appointments');
             const pendingAppointments = await appointmentCollection.find({
-                _id: ensureObjectId(userId),
+                student: ensureObjectId(userId),
                 status: AppointmentStatus.Pending || AppointmentStatus.Accepted,
                 studentCancelled: false,
                 summary: "", //ensure that the appointment is not finished, meaning accepted with an appointment
