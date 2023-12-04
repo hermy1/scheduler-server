@@ -190,3 +190,29 @@ export const deleteCourseById = async (courseId: ObjectId | string): Promise<boo
   }
 };
 
+export const removeStudentFromAdvisor = async (professorId: ObjectId, studentId: ObjectId): Promise<boolean> => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let db = await getDB();
+            const advisorCollection = db.collection<Advisor>('advisors');
+            const deletedResult = await advisorCollection.updateOne(
+                { professorId: professorId},
+                { $pull: { students: studentId } }
+            );
+
+            if (deletedResult.matchedCount > 0) {
+                if (deletedResult.modifiedCount > 0) {
+                    resolve(true)
+                } else {
+                    resolve(false)
+                }
+            } else {
+                throw new MongoUpdateError("Something went wrong removing student from advisor")
+            }
+
+        } catch (error) {
+            reject(error);
+        }
+    });
+}
+
