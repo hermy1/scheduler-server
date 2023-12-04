@@ -12,7 +12,8 @@ import { MongoInsertError } from "../../core/errors/mongo";
         let newAvailability = new Availability();
         newAvailability.professorId = professorId;
         newAvailability.weekDay = weekDay;
-        newAvailability.date = date;
+        // newAvailability.date = date;
+        newAvailability.date = new Date(date); 
         // newAvailability.timeSlots =  Array.isArray(timeSlots) ? timeSlots : JSON.parse(timeSlots);
         newAvailability.timeSlots = Array.isArray(timeSlots) 
         ? timeSlots.map(slot => new TimeSlot(new Date(slot.startTime), new Date(slot.endTime))) 
