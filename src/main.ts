@@ -45,16 +45,16 @@ export async function main(options: MainOptions) {
     });
     //set up cors 
     app.use(
-      cors({
-        origin: config.corsOrigin,
-        credentials: true,
-      })
+        cors({
+          origin: config.corsOrigin,
+          credentials: true,
+        })
     );
-  console.log(        config.corsOrigin
-);
+    console.log(        config.corsOrigin
+    );
     //set session
     app.use(sess);
-    
+
     //set routes
     app.use("/user", userRoutes);
 
@@ -63,16 +63,16 @@ export async function main(options: MainOptions) {
     app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
       console.log('err',err);
       if (err instanceof UserError) {
-          //Need to send the error down to the user
-          res.status(err.statusCode).send({ message: err.message });
+        //Need to send the error down to the user
+        res.status(err.statusCode).send({ message: err.message });
       } else {
-          res.status(500).send({message: err.message});
+        res.status(500).send({message: err.message});
       }
 
       const errMsg = err.message;
 
-  });
-    
+    });
+
     //sample hello world route
     app.get("/", (req: Request, res: Response, next: NextFunction) => {
       res.json("Hello world, Root route");
@@ -87,10 +87,10 @@ export async function main(options: MainOptions) {
 if (require.main === module) {
   const PORT = 7000;
   main({ port: PORT })
-    .then(() => {
-      console.log(`Server is running at http://localhost:${PORT}`);
-    })
-    .catch((err) => {
-      console.log("Something went wrong");
-    });
+      .then(() => {
+        console.log(`Server is running at http://localhost:${PORT}`);
+      })
+      .catch((err) => {
+        console.log("Something went wrong");
+      });
 }

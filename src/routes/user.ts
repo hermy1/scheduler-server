@@ -1063,7 +1063,7 @@ router.get(
     }
   });
 
-  router.get('/pastMeetings', isLoggedIn, async(req:Request, res:Response, next: NextFunction)=>{
+  router.post('/pastMeetings', isLoggedIn, async(req:Request, res:Response, next: NextFunction)=>{
     try {
       const me = req.session.Me;
       if (me){
@@ -1071,6 +1071,7 @@ router.get(
         const status = AppointmentStatus.Completed;
       if(userId){
         const meetings = await getPastMeetings(ensureObjectId(userId), status);
+        console.log(meetings);
       res.json(meetings);
       } else {
         throw new BadRequestError("Something went wrong when getting previous meetings");
