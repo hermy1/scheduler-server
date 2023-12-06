@@ -31,7 +31,7 @@ import { MongoInsertError } from "../../core/errors/mongo";
   };
 
 
-  //update availability TIME SLOTS AND DATE
+  //update availability TIME SLOTS AND DATE 
   export const updateAvailability = async (id: ObjectId, date: Date, weekDay: string, addTimeSlots: { startTime: Date, endTime: Date }[], removeTimeSlots: { startTime: Date, endTime: Date }[]): Promise<Availability> => {
     return new Promise(async (resolve, reject) => {
       try {
@@ -40,13 +40,18 @@ import { MongoInsertError } from "../../core/errors/mongo";
         let availability = await availabilityCollection.findOne({ _id: id });
         if (availability) {
           let updateQuery: { $set?: object, $push?: object, $pull?: object } = {
-            $set: { date: date, weekDay: weekDay }
+            $set: { date: new Date(date), weekDay: weekDay }
           };
           if (addTimeSlots && addTimeSlots.length > 0) {
-            updateQuery['$push'] = { timeSlots: { $each: addTimeSlots } };
+            //map time slots to TimeSlot to ensure Date type
+            updateQuery['$push'] = { timeSlots: { 
+              $each: addTimeSlots.map(slot => new TimeSlot(new Date(slot.startTime), new Date(slot.endTime))) 
+            }};
           }
           if (removeTimeSlots && removeTimeSlots.length > 0) {
-            updateQuery['$pull'] = { timeSlots: { $or: removeTimeSlots } };
+            updateQuery['$pull'] = { timeSlots: { 
+              $or: removeTimeSlots.map(slot => new TimeSlot(new Date(slot.startTime), new Date(slot.endTime)))
+            }};
           }
           let result = await availabilityCollection.updateOne({ _id: ensureObjectId(availability._id )}, updateQuery);
           if (result.acknowledged) {
@@ -100,50 +105,26 @@ import { MongoInsertError } from "../../core/errors/mongo";
     try {
       const db = await getDB();
       const availabilityCollection = db.collection<Availability>('availability');
-      const result = await availabilityCollection.findOne({
-        _id: ensureObjectId(availabilityId),
-        professorId: ensureObjectId(professorId),
-      });
-  
-      let newStart = new Date(startTime);
-  
-      if (result) {
-        for (let i = 0; i < result.timeSlots.length; i++) {
-          if ("" + result.timeSlots[i].startTime + "" === newStart.toString()) {
-            let removeTime = await availabilityCollection.updateOne(
-              {
-                _id: ensureObjectId(availabilityId),
-                'timeSlots.startTime': newStart,
-              },
-              {
-                $pull: {
-                  timeSlots: { startTime: newStart },
-                },
-              }
-            );
-  
-            if (removeTime.modifiedCount > 0) {
-              return true;
-            } else {
-              // If the loop finishes without returning true, there was no match
-              return false;
-            }
-          }
+      const newStart = new Date(startTime);
+
+      const removeTime = await availabilityCollection.updateOne(
+        {
+          _id: ensureObjectId(availabilityId),
+          professorId: ensureObjectId(professorId),
+          'timeSlots.startTime': newStart,
+        },
+        {
+          $pull: {
+            timeSlots: { startTime: newStart },
+          },
         }
-  
-        // If the loop finishes without returning, there was no match
-        return false;
-      } else {
-        // Handle the case where the result is null
-        return false;
-      }
+      );
+
+      return removeTime.modifiedCount > 0;
     } catch (error) {
-      console.error('Error removing time slot:', error);
-      return false;
+      throw new Error('Error removing time slot: ' + error); 
     }
   };
-  
-  
   
   
 
