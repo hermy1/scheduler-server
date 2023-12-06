@@ -1,7 +1,7 @@
 import { ensureObjectId, getDB } from "../../core/config/utils/mongohelper";
 import { PublicUser, User, UserRole } from "../../models/user";
 import { MongoFindError } from "../../core/errors/mongo";
-import { Appointment, AppointmentStatus } from "../../models/appointment";
+import { Appointment, AppointmentStatus, FullAppointment } from "../../models/appointment";
 import { Advisor } from "../../models/advisor";
 import { AggregationCursor, FindCursor, ObjectId, WithId } from "mongodb";
 import { Course } from "../../models/Course";
@@ -565,19 +565,75 @@ export const getPastMeetings = async (student: ObjectId, status: AppointmentStat
   }
 };
 
-export const getPendingAppointmentsByProfessorId = async (professorId: ObjectId | string): Promise<Appointment[]> => {
+export const getPendingAppointmentsByProfessorId = async (professorId: ObjectId | string): Promise<FullAppointment[] | null> => {
   return new Promise(async (resolve, reject) => {
     try {
       const db = await getDB();
-      const appointmentCollection = db.collection<Appointment>("appointments");
-      const appointments = await appointmentCollection.find({professor: ensureObjectId(professorId), status: AppointmentStatus.Pending, studentCancelled: false}).toArray();
-      if(appointments) {
-        resolve(appointments);
+      const appointmentCollection = db.collection<FullAppointment>("appointments");
+      const results: AggregationCursor<FullAppointment>  = await appointmentCollection.aggregate([
+        {$match: {
+          professor: ensureObjectId(professorId),
+          status: AppointmentStatus.Pending,
+          studentCancelled: false
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'student',
+          foreignField: '_id',
+          as: 'studentInfo'
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'professor',
+          foreignField: '_id',
+          as: 'professorInfo'
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'professor',
+          foreignField: '_id',
+          as: 'guestInfo'
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          student:1,
+          professor:1,
+          startDateTime: 1,
+          endDateTime:1,
+          status:1,
+          reason:1,
+          location:1,
+          guest:1,
+          secondaryStatus:1,
+          summary:1,
+          createdAt:1,
+          updatedAt:1,
+          studentCancelled:1,
+          studentName: {$arrayElemAt: ['$studentInfo.name',0]},
+          professorName: {$arrayElemAt: ['$professorInfo.name',0]},
+          guestName: {$arrayElemAt: ['$guestInfo.name',0]}
+        }
+      }
+    ]);
+      
+      if(results) {
+        const resultArray = await results.toArray();
+        if(resultArray.length > 0){
+          resolve(resultArray);
+        }
       } else {
-        reject(new MongoFindError("Could not find any appointment for the professor's given ID"));
+        throw new Error("Could not find any appointment for the professor's given ID")
       }
     } catch (err) {
-      throw err;
+     reject(err);
     }
   });
 };
