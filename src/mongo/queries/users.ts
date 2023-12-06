@@ -596,7 +596,7 @@ export const getPendingAppointmentsByProfessorId = async (professorId: ObjectId 
       {
         $lookup: {
           from: 'users',
-          localField: 'professor',
+          localField: 'guest',
           foreignField: '_id',
           as: 'guestInfo'
         }
@@ -604,28 +604,48 @@ export const getPendingAppointmentsByProfessorId = async (professorId: ObjectId 
       {
         $project: {
           _id: 1,
-          student:1,
-          professor:1,
+          student: 1,
+          professor: 1,
           startDateTime: 1,
-          endDateTime:1,
-          status:1,
-          reason:1,
-          location:1,
-          guest:1,
-          secondaryStatus:1,
-          summary:1,
-          createdAt:1,
-          updatedAt:1,
-          studentCancelled:1,
-          studentName: {$arrayElemAt: ['$studentInfo.name',0]},
-          professorName: {$arrayElemAt: ['$professorInfo.name',0]},
-          guestName: {$arrayElemAt: ['$guestInfo.name',0]}
-        }
+          endDateTime: 1,
+          status: 1,
+          reason: 1,
+          location: 1,
+          guest: 1,
+          secondaryStatus: 1,
+          summary: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          studentCancelled: 1,
+          studentName: {
+            $concat: [
+              { $arrayElemAt: ['$studentInfo.firstName', 0] },
+              ' ',
+              { $arrayElemAt: ['$studentInfo.lastName', 0] }
+            ]
+          },
+          professorName: {
+            $concat: [
+              { $arrayElemAt: ['$professorInfo.firstName', 0] },
+              ' ',
+              { $arrayElemAt: ['$professorInfo.lastName', 0] }
+            ]
+          },
+          guestName: {
+            $concat: [
+              { $arrayElemAt: ['$guestInfo.firstName', 0] },
+              ' ',
+              { $arrayElemAt: ['$guestInfo.lastName', 0] }
+            ]
+          }
       }
+      
     ]);
       
       if(results) {
         const resultArray = await results.toArray();
+        console.log(resultArray[0]);
+
         if(resultArray.length > 0){
           resolve(resultArray);
         }
