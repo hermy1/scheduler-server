@@ -13,6 +13,7 @@ import {
   getAllStudents,
   getAllStudentsInClassByClassId,
   getPendingAppointmentsByProfessorId,
+  getProfessorClasses,
   getUserbyUsername,
 } from "../mongo/queries/users";
 import {
@@ -519,4 +520,28 @@ router.get(
     }
   }
 );
+router.get("/classes", isLoggedIn, isProfessor,async (req:Request, res: Response, next: NextFunction) => {
+  try{
+    const me = req.session.Me;
+    if(me){
+      let professorId = (await getUserbyUsername(me.username))._id;
+      if(professorId){
+        const classes = await getProfessorClasses(
+          ensureObjectId(professorId)
+        );
+        res.json(classes);
+      } else {
+
+        throw new BadRequestError(
+          "Something went wrong when getting upcoming meetings"
+        );
+      }
+    }else {
+      throw new UnauthorizedError(`You are not authorized`);
+    }
+  }catch (err) {
+    next(err);
+  }
+  
+});
 export default router;

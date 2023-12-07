@@ -536,3 +536,20 @@ export const getProfessorInfoByProfessorId = async (professorId: ObjectId | stri
     }
   });
 };
+
+export const getProfessorClasses =async (professorId:ObjectId | string): Promise<Course[]> => {
+  return new Promise(async (resolve, reject)=>{
+    try{
+    const db = await getDB();
+    const courseCollection = db.collection<Course>("courses");
+    const course = await courseCollection.find({professor: ensureObjectId(professorId)}).toArray();
+    if(course) {
+        resolve(course);
+      } else {
+        reject(new MongoFindError("Could not find any courses for the professor's given ID"));
+      }
+    } catch (err) {
+      throw err;
+    }
+  })};
+  
