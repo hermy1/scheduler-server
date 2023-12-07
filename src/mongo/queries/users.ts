@@ -564,96 +564,93 @@ export const getPastMeetings = async (student: ObjectId, status: AppointmentStat
     throw err;
   }
 };
-
 export const getPendingAppointmentsByProfessorId = async (professorId: ObjectId | string): Promise<FullAppointment[] | null> => {
   return new Promise(async (resolve, reject) => {
     try {
       const db = await getDB();
       const appointmentCollection = db.collection<FullAppointment>("appointments");
-      const results: AggregationCursor<FullAppointment>  = await appointmentCollection.aggregate([
-        {$match: {
-          professor: ensureObjectId(professorId),
-          status: AppointmentStatus.Pending,
-          studentCancelled: false
-        }
-      },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'student',
-          foreignField: '_id',
-          as: 'studentInfo'
-        }
-      },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'professor',
-          foreignField: '_id',
-          as: 'professorInfo'
-        }
-      },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'guest',
-          foreignField: '_id',
-          as: 'guestInfo'
-        }
-      },
-      {
-        $project: {
-          _id: 1,
-          student: 1,
-          professor: 1,
-          startDateTime: 1,
-          endDateTime: 1,
-          status: 1,
-          reason: 1,
-          location: 1,
-          guest: 1,
-          secondaryStatus: 1,
-          summary: 1,
-          createdAt: 1,
-          updatedAt: 1,
-          studentCancelled: 1,
-          studentName: {
-            $concat: [
-              { $arrayElemAt: ['$studentInfo.firstName', 0] },
-              ' ',
-              { $arrayElemAt: ['$studentInfo.lastName', 0] }
-            ]
+      const results: AggregationCursor<FullAppointment> = await appointmentCollection.aggregate([
+        {
+          $match: {
+            professor: ensureObjectId(professorId),
+            status: AppointmentStatus.Pending,
+            studentCancelled: false,
           },
-          professorName: {
-            $concat: [
-              { $arrayElemAt: ['$professorInfo.firstName', 0] },
-              ' ',
-              { $arrayElemAt: ['$professorInfo.lastName', 0] }
-            ]
+        },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'student',
+            foreignField: '_id',
+            as: 'studentInfo',
           },
-          guestName: {
-            $concat: [
-              { $arrayElemAt: ['$guestInfo.firstName', 0] },
-              ' ',
-              { $arrayElemAt: ['$guestInfo.lastName', 0] }
-            ]
-          }
-      }
-      
-    ]);
-      
-      if(results) {
-        const resultArray = await results.toArray();
-        console.log(resultArray[0]);
+        },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'professor',
+            foreignField: '_id',
+            as: 'professorInfo',
+          },
+        },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'guest',
+            foreignField: '_id',
+            as: 'guestInfo',
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            student: 1,
+            professor: 1,
+            startDateTime: 1,
+            endDateTime: 1,
+            status: 1,
+            reason: 1,
+            location: 1,
+            guest: 1,
+            secondaryStatus: 1,
+            summary: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            studentCancelled: 1,
+            studentName: {
+              $concat: [
+                { $arrayElemAt: ['$studentInfo.firstName', 0] },
+                ' ',
+                { $arrayElemAt: ['$studentInfo.lastName', 0] },
+              ],
+            },
+            professorName: {
+              $concat: [
+                { $arrayElemAt: ['$professorInfo.firstName', 0] },
+                ' ',
+                { $arrayElemAt: ['$professorInfo.lastName', 0] },
+              ],
+            },
+            guestName: {
+              $concat: [
+                { $arrayElemAt: ['$guestInfo.firstName', 0] },
+                ' ',
+                { $arrayElemAt: ['$guestInfo.lastName', 0] },
+              ],
+            },
+          },
+        },
+      ]);
 
-        if(resultArray.length > 0){
-          resolve(resultArray);
-        }
+      const resultArray = await results.toArray();
+
+      if (resultArray.length > 0) {
+        resolve(resultArray);
       } else {
-        throw new Error("Could not find any appointment for the professor's given ID")
+        throw new Error("Could not find any appointment for the professor's given ID");
       }
     } catch (err) {
-     reject(err);
+      reject(err);
     }
   });
 };
