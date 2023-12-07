@@ -1,7 +1,7 @@
 import { ensureObjectId, getDB } from "../../core/config/utils/mongohelper";
 import { PublicUser, User, UserRole } from "../../models/user";
 import { MongoFindError } from "../../core/errors/mongo";
-import { Appointment, AppointmentStatus } from "../../models/appointment";
+import { Appointment, AppointmentStatus, FullAppointment } from "../../models/appointment";
 import { Advisor } from "../../models/advisor";
 import { AggregationCursor, FindCursor, ObjectId, WithId } from "mongodb";
 import { Course } from "../../models/Course";
@@ -568,7 +568,7 @@ export const getPendingAppointmentsByProfessorId = async (professorId: ObjectId 
   return new Promise(async (resolve, reject) => {
     try {
       const db = await getDB();
-      const appointmentCollection = db.collection<FullAppointment>("appointments");
+      const appointmentCollection = db.collection<Appointment>("appointments");
       const results: AggregationCursor<FullAppointment> = await appointmentCollection.aggregate([
         {
           $match: {
@@ -596,7 +596,7 @@ export const getPendingAppointmentsByProfessorId = async (professorId: ObjectId 
         {
           $lookup: {
             from: 'users',
-            localField: 'guest',
+            localField: 'guest._id',
             foreignField: '_id',
             as: 'guestInfo',
           },
