@@ -438,22 +438,18 @@ router.post(
               req.session.destroy((err) => {});
               res.json("Your password is changed.");
             } else {
-              res.json({
-                message: "Something went wrong when changing password`",
-              });
+              
               throw new ServerError(
                 `Something went wrong when changing password`
               );
             }
           } else {
-            res.json({ message: "The password doesn't meet the requirements" });
             throw new BadRequestError(
               "The password doesn't meet the requirements"
             );
           }
       
       } else {
-        res.json({ message: "You are not authorized" });
         throw new UnauthorizedError(`You are not authorized`);
       }
     } catch (err) {
