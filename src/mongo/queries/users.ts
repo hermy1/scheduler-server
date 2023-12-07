@@ -1,7 +1,7 @@
 import { ensureObjectId, getDB } from "../../core/config/utils/mongohelper";
 import { PublicUser, User, UserRole } from "../../models/user";
 import { MongoFindError } from "../../core/errors/mongo";
-import { Appointment, AppointmentStatus, FullAppointment } from "../../models/appointment";
+import { Appointment, AppointmentStatus } from "../../models/appointment";
 import { Advisor } from "../../models/advisor";
 import { AggregationCursor, FindCursor, ObjectId, WithId } from "mongodb";
 import { Course } from "../../models/Course";
@@ -651,6 +651,7 @@ export const getPendingAppointmentsByProfessorId = async (professorId: ObjectId 
       }
     } catch (err) {
       reject(err);
+
     }
   });
 };
