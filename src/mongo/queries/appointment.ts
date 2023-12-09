@@ -143,8 +143,10 @@ export const getPendingOrAcceptedAppsByUserId = async (userId: ObjectId): Promis
                 student: ensureObjectId(userId),
                 status: AppointmentStatus.Pending || AppointmentStatus.Accepted,
                 studentCancelled: false,
-                summary: "", //ensure that the appointment is not finished, meaning accepted with an appointment
-            }).toArray();
+                summary: "", // Ensure that the appointment is not finished, meaning accepted with an appointment
+            })
+            .sort({ endDateTime: -1 }) // Sort by endDateTime in descending order
+            .toArray();
             
             if(pendingAppointments.length === 0) {
                 resolve([]);
@@ -157,5 +159,6 @@ export const getPendingOrAcceptedAppsByUserId = async (userId: ObjectId): Promis
         }
     });
 };
+
 
 

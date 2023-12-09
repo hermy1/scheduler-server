@@ -540,14 +540,20 @@ export const getPastMeetings = async (student: ObjectId, status: AppointmentStat
           from: 'appointments',
           let: { id: "$_id" },
           pipeline: [
-            // checking for student appointment & status accepted & any end date/time less than the current date/time
+            // Checking for student appointment & status accepted & any end date/time less than the current date/time
             {
               $match: {
-                $and: [{ $expr: { $eq: ['$student', '$$id'] } }, { $expr: { $eq: ['$status', status] } },
-                { $expr: { $lt: ['$endDateTime', new Date()] } }
+                $and: [
+                  { $expr: { $eq: ['$student', '$$id'] } },
+                  { $expr: { $eq: ['$status', status] } },
+                  { $expr: { $lt: ['$endDateTime', new Date()] } }
                 ]
               }
             },
+            // Sort the appointments in descending order based on endDateTime
+            {
+              $sort: { endDateTime: -1 }
+            }
           ],
           as: 'appointment',
         },
@@ -564,6 +570,7 @@ export const getPastMeetings = async (student: ObjectId, status: AppointmentStat
     throw err;
   }
 };
+
 export const getPendingAppointmentsByProfessorId = async (professorId: ObjectId | string): Promise<FullAppointment[] | null> => {
   return new Promise(async (resolve, reject) => {
     try {
