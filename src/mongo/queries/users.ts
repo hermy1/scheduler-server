@@ -564,7 +564,7 @@ export const getPastMeetings = async (student: ObjectId, status: AppointmentStat
     throw err;
   }
 };
-export const getPendingAppointmentsByProfessorId = async (professorId: ObjectId | string): Promise<FullAppointment[] | null> => {
+export const getPendingAppointmentsByProfessorId = async (professorId: ObjectId | string, status:string): Promise<FullAppointment[] | null> => {
   return new Promise(async (resolve, reject) => {
     try {
       const db = await getDB();
@@ -573,7 +573,7 @@ export const getPendingAppointmentsByProfessorId = async (professorId: ObjectId 
         {
           $match: {
             professor: ensureObjectId(professorId),
-            status: AppointmentStatus.Pending,
+            status: status,  
             studentCancelled: false,
           },
         },
@@ -647,11 +647,10 @@ export const getPendingAppointmentsByProfessorId = async (professorId: ObjectId 
       if (resultArray.length > 0) {
         resolve(resultArray);
       } else {
-        throw new Error("Could not find any appointment for the professor's given ID");
-      }
+        resolve(null);
+      } 
     } catch (err) {
-      reject(err);
-
+      reject(err); 
     }
   });
 };
