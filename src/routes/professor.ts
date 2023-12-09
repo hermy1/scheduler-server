@@ -25,7 +25,8 @@ import {
   addStudentToAdvisor,
   deleteCourseById,
   insertNewCourse,
-  insertStudentCourse, removeStudentFromAdvisor,
+  insertStudentCourse,
+  removeStudentFromAdvisor,
 } from "../mongo/mutations/professor";
 import {
   insertAvailability,
@@ -42,7 +43,11 @@ import { updateAvailability } from "../mongo/mutations/availability";
 import { ObjectId } from "mongodb";
 import { AppointmentStatus } from "../models/appointment";
 import { MongoFindError } from "../core/errors/mongo";
-import {getAppointmentByGuestId, getAppointmentbyId, getProfessorUpcomingMeetings} from "../mongo/queries/appointment";
+import {
+  getAppointmentByGuestId,
+  getAppointmentbyId,
+  getProfessorUpcomingMeetings,
+} from "../mongo/queries/appointment";
 import { createNotification } from "../mongo/mutations/notification";
 
 const router: Router = express.Router();
@@ -120,7 +125,11 @@ router.post(
           );
           //add notification for student
           let message = `${user.firstName} ${user.lastName} added you to a class`;
-          let not = await createNotification(studentId,"Added to course",message);
+          let not = await createNotification(
+            studentId,
+            "Added to course",
+            message
+          );
           res.json(course);
         } else {
           throw new UnauthorizedError("Unauthorized");
@@ -150,7 +159,11 @@ router.post(
         );
         let user = await getUserbyUsername(me.username);
         let message = `${user.firstName} ${user.lastName} added you to their advising group`;
-        let not = await createNotification(studentId,"Added to advisor group",message);
+        let not = await createNotification(
+          studentId,
+          "Added to advisor group",
+          message
+        );
         res.json(addStudent);
       } else {
         throw new UnauthorizedError("Unauthorized");
@@ -240,8 +253,9 @@ router.get(
     }
   }
 );
-router.post(
-  "/update-apointment-status",
+
+router.put(
+  "/update-appointment",
   isLoggedIn,
   isProfessor,
   async (req: Request, res: Response, next: NextFunction) => {
@@ -251,69 +265,46 @@ router.post(
         let appointmentId = req.body.appointmentId;
         let appointmentStatus = req.body.appointmentStatus;
         let appointmentLocation = req.body.appointmentLocation;
+        let summary = req.body.summary;
 
-        let appointmentStatusEnum: AppointmentStatus;
-        switch (appointmentStatus) {
-          case AppointmentStatus.Pending:
-          case AppointmentStatus.Accepted:
-          case AppointmentStatus.Rejected:
-          case AppointmentStatus.Cancelled:
-            appointmentStatusEnum = appointmentStatus as AppointmentStatus;
-            break;
-          default:
-            throw new Error(`Invalid appointment status: ${appointmentStatus}`);
-        }
+        let appointmentStatusEnum: AppointmentStatus = appointmentStatus;
 
         let updatedAppointment = await updateAppointmentStatusAndLocationById(
           appointmentId,
-          appointmentStatusEnum,
-          appointmentLocation
+          appointmentStatusEnum
         );
-        if (updatedAppointment) {
-          //add notification for student
-          let user = await getUserbyUsername(me.username);
-          let apt = await getAppointmentbyId(appointmentId);
-          let message = `${user.firstName} ${user.lastName} updated a meeting status to: ${appointmentStatus}`;
-          let not = await createNotification(apt.student,"Appointment status updated", message);
-          res.json({
-            message: "Appointment Status Successfully Updated",
-            appointment: updatedAppointment,
-          });
-        } else {
- 
-          throw new Error("Something went wrong when updating appointment");
-        }
-      }
-    } catch (err) {
-      next(err);
-    }
-  }
-);
-
-router.post(
-  "/addSummary",
-  isLoggedIn,
-  isProfessor,
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      let me = req.session.Me;
-      if (me && me.username && me.username.length > 0) {
-        let appointmentId = req.body.appointmentId.toString();
-        let summary = req.body.summary.toString();
-
-        let add = await addSummary(appointmentId, summary);
-        if (add) {
-          let user = await getUserbyUsername(me.username);
-          let message = `${user.firstName} ${user.lastName} added a summary to a past meeting`;
-          let apt = await getAppointmentbyId(appointmentId);
-          let not = await createNotification(apt.student,"Summary added",message);
-
-          res.json(add);
-        } else {
-    
-          throw new BadRequestError(
-            "Something went wrong when adding summary to appointment"
+          if (updatedAppointment) {
+            let user = await getUserbyUsername(me.username);
+            let apt = await getAppointmentbyId(appointmentId);
+            let message = `${user.firstName} ${user.lastName} updated a meeting status to: ${appointmentStatus}`;
+            let not = await createNotification(
+              apt.student,
+              "Appointment status updated",
+              message
+            );
+            res.json({
+              message: "Appointment Status Successfully Updated",
+            });
+          } else {
+            throw new Error(
+              "Something went wrong when changing appointment status"
+            );
+          }
+        if (summary && summary.length > 0) {
+          let add = await addSummary(
+            appointmentId,
+            summary,
+            appointmentLocation
           );
+          if (!add) {
+            throw new BadRequestError(
+              "Something went wrong when adding summary to appointment"
+            );
+          } else {
+            res.json({
+              message: "Appointment Location & Sumary Updated",
+            });
+          }
         }
       }
     } catch (err) {
@@ -492,24 +483,30 @@ router.delete(
 );
 
 //get pending appointments by professor id
-router.get("/pending-appointments", isLoggedIn, isProfessor, async(req: Request, res: Response, next: NextFunction) => {
-  try {
-    let me = req.session.Me;
-    if(me) {
-      let id = (await getUserbyUsername(me.username))._id;
-      const appointments = await getPendingAppointmentsByProfessorId(id);
-      if(appointments) {
-        res.json(appointments);
+router.get(
+  "/pending-appointments:status?",
+  isLoggedIn,
+  isProfessor,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      let me = req.session.Me;
+      if (me) {
+        let id = (await getUserbyUsername(me.username))._id;
+        let status = req.query.status?.toString()|| AppointmentStatus.Pending;
+        const appointments = await getPendingAppointmentsByProfessorId(id, status);
+        if (appointments && appointments.length > 0) {
+          res.json(appointments);
+        } else {
+          res.json([]); //no pending appointments
+        }
       } else {
-        throw new BadRequestError("Something went wrong grabbing appointments for given professor ID");
+        throw new UnauthorizedError("Unauthorized"); 
       }
-    } else {
-      throw new UnauthorizedError("Unauthorized");
+    } catch (err) {
+      next(err);
     }
-  } catch (err) {
-    next(err)
   }
-});
+);
 
 router.get(
   "/upcoming",
@@ -526,9 +523,12 @@ router.get(
             ensureObjectId(professorId),
             status
           );
-          res.json(meetings);
+          if (meetings.length > 0) {
+            res.json(meetings);  
+          } else {
+            res.json({ message: "No upcoming meetings", success: false });
+          }
         } else {
-
           throw new BadRequestError(
             "Something went wrong when getting upcoming meetings"
           );
@@ -550,32 +550,30 @@ router.get(
     try {
       const me = req.session.Me;
       const page = req.query.page?.toString() || 0;
-      const search = req.query.search?.toString() || "";      
+      const search = req.query.search?.toString() || "";
       const limit = req.query.limit?.toString() || 10;
 
       if (me) {
         const advisorId = (await getUserbyUsername(me.username))._id;
 
-
-
-  
-        const editedPage = typeof (page) === "string" ? parseInt(page) : page; 
-        const editedLimit = typeof (limit) === "string" ? parseInt(limit) : limit; 
+        const editedPage = typeof page === "string" ? parseInt(page) : page;
+        const editedLimit = typeof limit === "string" ? parseInt(limit) : limit;
         const filter = { search, page: editedPage, limit: editedLimit };
-  
 
+        const users = await getFilteredStudentsInAdvisorGroup(
+          ensureObjectId(advisorId),
+          filter
+        );
+        const total = await getFilteredStudentsInAdvisorGroupCount(
+          ensureObjectId(advisorId),
+          filter
+        );
 
-        
-        const users = await getFilteredStudentsInAdvisorGroup(ensureObjectId(advisorId),filter);
-        const total = await getFilteredStudentsInAdvisorGroupCount(ensureObjectId(advisorId),filter);
-
-        if(users){
+        if (users) {
           res.json({ success: true, data: { students: users, total } });
-
-        }else {
-          throw new BadRequestError('Something went wrong getting students');
+        } else {
+          throw new BadRequestError("Something went wrong getting students");
         }
-
       } else {
         throw new UnauthorizedError(`You are not authorized`);
       }
@@ -596,17 +594,15 @@ router.get(
 
       if (me) {
         const advisorId = (await getUserbyUsername(me.username))._id;
-        
+
         const users = await getNotStudentsInAdvisorGroup(
           ensureObjectId(advisorId)
         );
-        if(users){
-                  res.json(users);
-
-        }else {
-          throw new BadRequestError('Something went wrong getting students');
+        if (users) {
+          res.json(users);
+        } else {
+          throw new BadRequestError("Something went wrong getting students");
         }
-
       } else {
         throw new UnauthorizedError(`You are not authorized`);
       }
@@ -626,20 +622,16 @@ router.get(
       let courseId = req.query.courseId?.toString();
 
       if (me) {
-        if(courseId){
-           const users = await getNotStudentsInCourse(courseId );
-        if(users){
-                  res.json(users);
-
-        }else {
-          throw new BadRequestError('Something went wrong getting students');
-        }
-        } else{
+        if (courseId) {
+          const users = await getNotStudentsInCourse(courseId);
+          if (users) {
+            res.json(users);
+          } else {
+            throw new BadRequestError("Something went wrong getting students");
+          }
+        } else {
           throw new BadRequestError("Send up valid courseId");
         }
-        
-       
-
       } else {
         throw new UnauthorizedError(`You are not authorized`);
       }
@@ -648,7 +640,6 @@ router.get(
     }
   }
 );
-
 
 router.delete(
   "/delete-course",
@@ -660,20 +651,16 @@ router.delete(
       let courseId = req.body.courseId?.toString();
 
       if (me) {
-        if(courseId){
-           const course = await deleteCourseById(courseId );
-        if(course){
-                  res.json(course);
-
-        }else {
-          throw new BadRequestError('Something went wrong deleting course');
-        }
-        } else{
+        if (courseId) {
+          const course = await deleteCourseById(courseId);
+          if (course) {
+            res.json(course);
+          } else {
+            throw new BadRequestError("Something went wrong deleting course");
+          }
+        } else {
           throw new BadRequestError("Send up valid courseId");
         }
-        
-       
-
       } else {
         throw new UnauthorizedError(`You are not authorized`);
       }
@@ -684,86 +671,88 @@ router.delete(
 );
 
 router.post(
-    "/guest-appointments",
-    isLoggedIn,
-    isProfessor,
-    async(req: Request, res: Response, next: NextFunction) => {
-      try {
+  "/guest-appointments",
+  isLoggedIn,
+  isProfessor,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const me = req.session.Me;
 
-        const me = req.session.Me;
-
-        if (me) {
-          let guestId = (await getUserbyUsername(me.username))._id;
-          if (guestId) {
-            let guestAppointments = await getAppointmentByGuestId(guestId)
-            if (guestAppointments.length > 0) {
-              res.json(guestAppointments);
-            } else {
-              res.json([]);
-            }
+      if (me) {
+        let guestId = (await getUserbyUsername(me.username))._id;
+        if (guestId) {
+          let guestAppointments = await getAppointmentByGuestId(guestId);
+          if (guestAppointments.length > 0) {
+            res.json(guestAppointments);
           } else {
-            throw new UnauthorizedError(`You are not authorized`);
+            res.json([]);
           }
         } else {
           throw new UnauthorizedError(`You are not authorized`);
         }
-      } catch (err) {
-        next(err);
+      } else {
+        throw new UnauthorizedError(`You are not authorized`);
       }
+    } catch (err) {
+      next(err);
     }
+  }
 );
 
 router.post(
-    "/remove-student",
-    isLoggedIn,
-    isProfessor,
-    async(req: Request, res: Response, next: NextFunction) => {
-      try {
-        const me = req.session.Me
-        const studentId = req.body.studentId;
-        if(me){
-          let professorId = (await getUserbyUsername(me.username))._id;
-          let deleteStudent = await removeStudentFromAdvisor(ensureObjectId(professorId), ensureObjectId(studentId));
-          if (deleteStudent){
-            res.json(deleteStudent);
-          } else {
-            //res.json("Student Not Found");
-            throw new BadRequestError('Student not found');
-          }
+  "/remove-student",
+  isLoggedIn,
+  isProfessor,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const me = req.session.Me;
+      const studentId = req.body.studentId;
+      if (me) {
+        let professorId = (await getUserbyUsername(me.username))._id;
+        let deleteStudent = await removeStudentFromAdvisor(
+          ensureObjectId(professorId),
+          ensureObjectId(studentId)
+        );
+        if (deleteStudent) {
+          res.json(deleteStudent);
         } else {
-          throw new UnauthorizedError(`You are not authorized`);
+          //res.json("Student Not Found");
+          throw new BadRequestError("Student not found");
         }
-      } catch (err) {
-        next(err)
-      }
-    }
-)
-
-router.get("/classes", isLoggedIn, isProfessor,async (req:Request, res: Response, next: NextFunction) => {
-  try{
-    const me = req.session.Me;
-    if(me){
-      let professorId = (await getUserbyUsername(me.username))._id;
-      if(professorId){
-        const classes = await getProfessorClasses(
-          ensureObjectId(professorId)
-        );
-        res.json(classes);
       } else {
-
-        throw new BadRequestError(
-          "Something went wrong when getting upcoming meetings"
-        );
+        throw new UnauthorizedError(`You are not authorized`);
       }
-    }else {
-      throw new UnauthorizedError(`You are not authorized`);
+    } catch (err) {
+      next(err);
     }
-  }catch (err) {
-    next(err);
   }
+);
 
-});
+router.get(
+  "/classes",
+  isLoggedIn,
+  isProfessor,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const me = req.session.Me;
+      if (me) {
+        let professorId = (await getUserbyUsername(me.username))._id;
+        if (professorId) {
+          const classes = await getProfessorClasses(
+            ensureObjectId(professorId)
+          );
+          res.json(classes);
+        } else {
+          throw new BadRequestError(
+            "Something went wrong when getting upcoming meetings"
+          );
+        }
+      } else {
+        throw new UnauthorizedError(`You are not authorized`);
+      }
+    } catch (err) {
+      next(err);
+    }
+  }
+);
 export default router;
-
-
-

@@ -10,7 +10,6 @@ export const createAppointment = async (userId:string,professorId:string,startTi
         try {
             let shouldContinue = false;
             const isAdvisor = advisor === 'true';
-console.log('sdsad',isAdvisor);
             //if advisor check if student is in advisor's students array
             if (isAdvisor){
                 
@@ -29,7 +28,7 @@ console.log('sdsad',isAdvisor);
                     shouldContinue = true;
                 }
             }
-            console.log('end',shouldContinue);
+        
 
             if(shouldContinue === true){
                 const userObjectId = ensureObjectId(userId);
@@ -93,7 +92,7 @@ export const cancelAppointment = async (appointmentId: string): Promise<boolean>
     });
 };
 
-export const updateAppointmentStatusAndLocationById = async (appointmentId: ObjectId, appointmentStatus: AppointmentStatus, location: string): Promise<Appointment> => {
+export const updateAppointmentStatusAndLocationById = async (appointmentId: ObjectId, appointmentStatus: AppointmentStatus): Promise<Appointment> => {
     return new Promise( async (resolve, reject) => {
         try{
             let db = await getDB();
@@ -101,7 +100,7 @@ export const updateAppointmentStatusAndLocationById = async (appointmentId: Obje
             const appointmentToBeUpdated = await appointmentsCollection.findOne({ _id: ensureObjectId(appointmentId)});
 
             if(appointmentToBeUpdated){
-                let appointmentStatusUpdate = appointmentsCollection.updateOne({_id: ensureObjectId(appointmentId)}, {$set: {status: appointmentStatus, location: location}})
+                let appointmentStatusUpdate = appointmentsCollection.updateOne({_id: ensureObjectId(appointmentId)}, {$set: {status: appointmentStatus}})
 
                 if((await appointmentStatusUpdate).modifiedCount > 0) {
                     const updatedAppointment = await appointmentsCollection.findOne({ _id: ensureObjectId(appointmentId)});
@@ -112,7 +111,7 @@ export const updateAppointmentStatusAndLocationById = async (appointmentId: Obje
                     }
 
                 } else {
-                    reject(new MongoUpdateError("Nothing was updated"))
+                    throw new MongoUpdateError("Something went wrong while updating appointment status") 
                 }
 
             } else {
@@ -125,12 +124,12 @@ export const updateAppointmentStatusAndLocationById = async (appointmentId: Obje
     })
 }
 
-export const addSummary = async (appointmentId: string|ObjectId, summary:string): Promise<boolean> => {
+export const addSummary = async (appointmentId: string|ObjectId, summary:string, location:string): Promise<boolean> => {
     return new Promise(async (resolve, reject) => {
         try {
             let db = await getDB();
             const collection = await db.collection<Appointment>('appointments');
-            let addSum = await collection.updateOne({'_id':ensureObjectId(appointmentId)}, { $set:{summary: summary}});
+            let addSum = await collection.updateOne({'_id':ensureObjectId(appointmentId)}, { $set:{summary: summary, location: location}}); 
   
             if (addSum.acknowledged) {
                 resolve(true)
