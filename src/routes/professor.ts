@@ -108,7 +108,7 @@ router.post(
 );
 
 //remove student from course
-router.post("/remove-student", isLoggedIn, isProfessor, async (req: Request, res: Response, next: NextFunction) => {
+router.post("/remove-student-course", isLoggedIn, isProfessor, async (req: Request, res: Response, next: NextFunction) => {
   try {
     let me = req.session.Me;
       if (me && me.username && me.username.length > 0) {

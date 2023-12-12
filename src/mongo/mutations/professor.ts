@@ -42,10 +42,10 @@ export const removeStudentFromCourse = async (courseId: ObjectId, studentId: Obj
       let db = await getDB();
       const coursesCollection = db.collection<Course>('courses');
       const deletedResult = await coursesCollection.updateOne(
-        { courseId: courseId },
+        { _id: courseId },
         { $pull: { students: studentId } }
       );
-
+      console.log(deletedResult);
       if (deletedResult.matchedCount > 0) {
         if (deletedResult.modifiedCount > 0) {
           resolve(true);
