@@ -1,7 +1,11 @@
 import { ensureObjectId, getDB } from "../../core/config/utils/mongohelper";
 import { PublicUser, User, UserRole } from "../../models/user";
 import { MongoFindError } from "../../core/errors/mongo";
-import { Appointment, AppointmentStatus, FullAppointment } from "../../models/appointment";
+import {
+  Appointment,
+  AppointmentStatus,
+  FullAppointment,
+} from "../../models/appointment";
 import { Advisor } from "../../models/advisor";
 import { AggregationCursor, FindCursor, ObjectId, WithId } from "mongodb";
 import { Course } from "../../models/Course";
@@ -34,7 +38,7 @@ export const getUserbyUsername = async (username: string): Promise<User> => {
     } catch (err) {
       reject(err);
     }
-  })
+  });
 };
 //get user infor and remove password, birthdate, and email for public profile
 export const getUserInfo = async (userId: ObjectId): Promise<PublicUser> => {
@@ -67,7 +71,7 @@ export const getUserInfo = async (userId: ObjectId): Promise<PublicUser> => {
     } catch (err) {
       reject(err);
     }
-  })
+  });
 };
 export const getUserbyEmail = async (email: string): Promise<User> => {
   return new Promise(async (resolve, reject) => {
@@ -83,7 +87,7 @@ export const getUserbyEmail = async (email: string): Promise<User> => {
     } catch (err) {
       reject(err);
     }
-  })
+  });
 };
 
 export const getUserbyId = async (userId: string): Promise<User> => {
@@ -100,7 +104,7 @@ export const getUserbyId = async (userId: string): Promise<User> => {
     } catch (err) {
       reject(err);
     }
-  })
+  });
 };
 
 //check if user exisits by username
@@ -137,8 +141,7 @@ export const checkIfEmailExists = async (email: string): Promise<boolean> => {
       reject(err);
     }
   });
-}
-
+};
 
 //get all students
 export const getAllStudents = async (): Promise<User[]> => {
@@ -146,15 +149,21 @@ export const getAllStudents = async (): Promise<User[]> => {
     try {
       let db = await getDB();
       const collection = db.collection<User>("users");
-      const result = await collection.find({ role: UserRole.Student }).toArray();
+      const result = await collection
+        .find({ role: UserRole.Student })
+        .toArray();
       resolve(result);
     } catch (err) {
       reject(err);
     }
-  })
+  });
 };
 
-export const getFilteredStudents = async (filter: { search: string, page: number, limit: number}): Promise<User[]> => {
+export const getFilteredStudents = async (filter: {
+  search: string;
+  page: number;
+  limit: number;
+}): Promise<User[]> => {
   return new Promise(async (resolve, reject) => {
     try {
       let db = await getDB();
@@ -164,62 +173,68 @@ export const getFilteredStudents = async (filter: { search: string, page: number
         $and: [
           {
             $or: [
-              { username: { $regex: filter.search, $options: 'i' } },
-              { lastName: { $regex: filter.search, $options: 'i' } },
-              { firstName: { $regex: filter.search, $options: 'i' } }
-            ]
+              { username: { $regex: filter.search, $options: "i" } },
+              { lastName: { $regex: filter.search, $options: "i" } },
+              { firstName: { $regex: filter.search, $options: "i" } },
+            ],
           },
-          { role: UserRole.Student }
-        ]
+          { role: UserRole.Student },
+        ],
       };
-                  
+
       const offset = filter.page * filter.limit;
 
-      const results = await collection.find(query).skip(offset).limit(filter.limit).toArray();
+      const results = await collection
+        .find(query)
+        .skip(offset)
+        .limit(filter.limit)
+        .toArray();
 
-        resolve(results);
-    
+      resolve(results);
     } catch (err) {
       reject(err);
     }
   });
 };
 
-export const getFilteredStudentsCount = async (filter: { search: string, page: number, limit: number}): Promise<number> => {
+export const getFilteredStudentsCount = async (filter: {
+  search: string;
+  page: number;
+  limit: number;
+}): Promise<number> => {
   return new Promise(async (resolve, reject) => {
-      try {
-          let db = await getDB();
-          const collection = await db.collection<User>('users');
+    try {
+      let db = await getDB();
+      const collection = await db.collection<User>("users");
 
-          let query: {} = {
-            $and: [
-              {
-                $or: [
-                  { username: { $regex: filter.search, $options: 'i' } },
-                  { lastName: { $regex: filter.search, $options: 'i' } },
-                  { firstName: { $regex: filter.search, $options: 'i' } }
-                ]
-              },
-              { role: UserRole.Student }
-            ]
-          };
-          const offset = filter.page * filter.limit;
+      let query: {} = {
+        $and: [
+          {
+            $or: [
+              { username: { $regex: filter.search, $options: "i" } },
+              { lastName: { $regex: filter.search, $options: "i" } },
+              { firstName: { $regex: filter.search, $options: "i" } },
+            ],
+          },
+          { role: UserRole.Student },
+        ],
+      };
+      const offset = filter.page * filter.limit;
 
-          const results = await collection.countDocuments(query);
+      const results = await collection.countDocuments(query);
 
-          if (results || results === 0) {
-              resolve(results);
-          } else {
-              throw new MongoFindError(`Something went wrong while retriving students count`);
-          }
-
-
-      } catch (err: any) {
-          reject(err);
+      if (results || results === 0) {
+        resolve(results);
+      } else {
+        throw new MongoFindError(
+          `Something went wrong while retriving students count`
+        );
       }
+    } catch (err: any) {
+      reject(err);
+    }
   });
 };
-
 
 //get all professors
 export const getAllProfessors = async (): Promise<User[]> => {
@@ -227,7 +242,9 @@ export const getAllProfessors = async (): Promise<User[]> => {
     try {
       let db = await getDB();
       const collection = db.collection<User>("users");
-      const result = await collection.find({ role: UserRole.Professor }).toArray();
+      const result = await collection
+        .find({ role: UserRole.Professor })
+        .toArray();
       resolve(result);
     } catch (err) {
       reject(err);
@@ -235,7 +252,9 @@ export const getAllProfessors = async (): Promise<User[]> => {
   });
 };
 
-export const getAdvisorbyProfesserId = async (professorId: ObjectId): Promise<Advisor> => {
+export const getAdvisorbyProfesserId = async (
+  professorId: ObjectId
+): Promise<Advisor> => {
   return new Promise(async (resolve, reject) => {
     try {
       let db = await getDB();
@@ -249,9 +268,11 @@ export const getAdvisorbyProfesserId = async (professorId: ObjectId): Promise<Ad
     } catch (err) {
       reject(err);
     }
-  })
+  });
 };
-export const AdvisorbyProfesserId = async (professorId: ObjectId): Promise<boolean> => {
+export const AdvisorbyProfesserId = async (
+  professorId: ObjectId
+): Promise<boolean> => {
   return new Promise(async (resolve, reject) => {
     try {
       let db = await getDB();
@@ -265,14 +286,17 @@ export const AdvisorbyProfesserId = async (professorId: ObjectId): Promise<boole
     } catch (err) {
       reject(err);
     }
-  })
+  });
 };
 
 // Assuming that 'Appointment' and 'User' have compatible structures
-export const getUpcomingMeetings = async (student: ObjectId, status: AppointmentStatus): Promise<Appointment[]> => {
+export const getUpcomingMeetings = async (
+  student: ObjectId,
+  status: AppointmentStatus
+): Promise<Appointment[]> => {
   try {
     const db = await getDB();
-    const collection = db.collection<User>('users');
+    const collection = db.collection<User>("users");
     console.log(new Date());
     const pipeline = [
       {
@@ -280,7 +304,7 @@ export const getUpcomingMeetings = async (student: ObjectId, status: Appointment
       },
       {
         $lookup: {
-          from: 'appointments',
+          from: "appointments",
           let: { id: "$_id" },
           pipeline: [
             // checking for student appointment & status accepted
@@ -288,28 +312,29 @@ export const getUpcomingMeetings = async (student: ObjectId, status: Appointment
             {
               $match: {
                 $and: [
-                  { $expr: { $eq: ['$student', '$$id'] } },
-                  { $expr: { $eq: ['$status', status] } },
-                  { $expr: { $eq: ['$studentCancelled', false] } }, // Ensure studentCancelled is false
-                  { $expr: { $gt: ['$startDateTime', new Date()] } }, // Only show appointments with future dates
-                ]
-              }
+                  { $expr: { $eq: ["$student", "$$id"] } },
+                  { $expr: { $eq: ["$status", status] } },
+                  { $expr: { $eq: ["$studentCancelled", false] } }, // Ensure studentCancelled is false
+                  { $expr: { $gt: ["$startDateTime", new Date()] } }, // Only show appointments with future dates
+                ],
+              },
             },
           ],
-          as: 'appointment',
+          as: "appointment",
         },
       },
       {
-        $unwind: { path: '$appointment', preserveNullAndEmptyArrays: false },
+        $unwind: { path: "$appointment", preserveNullAndEmptyArrays: false },
       },
       {
         $sort: {
-          'appointment.startDateTime': 1, // Sort by startDateTime in ascending order (earliest first)
+          "appointment.startDateTime": 1, // Sort by startDateTime in ascending order (earliest first)
         },
       },
     ];
 
-    const result: AggregationCursor<Appointment> = collection.aggregate(pipeline);
+    const result: AggregationCursor<Appointment> =
+      collection.aggregate(pipeline);
     const appointmentArray: Appointment[] = await result.toArray();
     return appointmentArray;
   } catch (err) {
@@ -317,12 +342,16 @@ export const getUpcomingMeetings = async (student: ObjectId, status: Appointment
   }
 };
 
-export const getProfessorsByUserId = async (id: ObjectId | string): Promise<User[]> => {
+export const getProfessorsByUserId = async (
+  id: ObjectId | string
+): Promise<User[]> => {
   return new Promise(async (resolve, reject) => {
     try {
       let db = await getDB();
       const collection = db.collection<Course>("courses");
-      const result = await collection.find({ students: ensureObjectId(id) }).toArray();
+      const result = await collection
+        .find({ students: ensureObjectId(id) })
+        .toArray();
       let professorList: string[] = [];
       if (result) {
         for (let i = 0; i < result.length; i++) {
@@ -332,10 +361,10 @@ export const getProfessorsByUserId = async (id: ObjectId | string): Promise<User
           }
         }
 
-        const usersCollection = db.collection<User>('users');
-        const professors = await usersCollection.find({ _id: { $in: professorList.map(id => new ObjectId(id)) } }).toArray();
-
-
+        const usersCollection = db.collection<User>("users");
+        const professors = await usersCollection
+          .find({ _id: { $in: professorList.map((id) => new ObjectId(id)) } })
+          .toArray();
 
         resolve(professors);
       } else {
@@ -344,20 +373,21 @@ export const getProfessorsByUserId = async (id: ObjectId | string): Promise<User
     } catch (err) {
       throw err;
     }
-  })
+  });
 };
 
-export const getProfessorByUserId = async (professorId: ObjectId | string): Promise<User> => {
+export const getProfessorByUserId = async (
+  professorId: ObjectId | string
+): Promise<User> => {
   return new Promise(async (resolve, reject) => {
     try {
       let db = await getDB();
       const collection = db.collection<User>("users");
       const result = await collection.findOne({
         _id: ensureObjectId(professorId),
-        role: UserRole.Professor
+        role: UserRole.Professor,
       });
       if (result) {
-
         resolve(result);
       } else {
         reject(new MongoFindError("Professor Not Found"));
@@ -365,15 +395,19 @@ export const getProfessorByUserId = async (professorId: ObjectId | string): Prom
     } catch (err) {
       throw err;
     }
-  })
+  });
 };
 
-export const getAdvisorsByUserId = async (id: ObjectId | string): Promise<User[]> => {
+export const getAdvisorsByUserId = async (
+  id: ObjectId | string
+): Promise<User[]> => {
   return new Promise(async (resolve, reject) => {
     try {
       let db = await getDB();
       const collection = db.collection<Advisor>("advisors");
-      const result = await collection.find({ students: ensureObjectId(id) }).toArray();
+      const result = await collection
+        .find({ students: ensureObjectId(id) })
+        .toArray();
       let AdvisorList: string[] = [];
       if (result) {
         for (let i = 0; i < result.length; i++) {
@@ -383,15 +417,17 @@ export const getAdvisorsByUserId = async (id: ObjectId | string): Promise<User[]
           }
         }
 
-        const usersCollection = db.collection<User>('users');
-        const professors = await usersCollection.find({ _id: { $in: AdvisorList.map(id => new ObjectId(id)) } }).toArray();
+        const usersCollection = db.collection<User>("users");
+        const professors = await usersCollection
+          .find({ _id: { $in: AdvisorList.map((id) => new ObjectId(id)) } })
+          .toArray();
 
         resolve(professors);
       } else {
         resolve([]);
       }
-    } catch (err) { }
-  })
+    } catch (err) {}
+  });
 };
 
 export const getAggregates = async (): Promise<{
@@ -402,10 +438,18 @@ export const getAggregates = async (): Promise<{
 }> => {
   try {
     const db = await getDB();
-    const studentsCount = await db.collection<User>('users').countDocuments({ role: UserRole.Student });
-    const classesCount = await db.collection<Course>('courses').countDocuments();
-    const professorsCount = await db.collection<User>('users').countDocuments({ role: UserRole.Professor });
-    const appointmentsCount = await db.collection<Appointment>('appointments').countDocuments();
+    const studentsCount = await db
+      .collection<User>("users")
+      .countDocuments({ role: UserRole.Student });
+    const classesCount = await db
+      .collection<Course>("courses")
+      .countDocuments();
+    const professorsCount = await db
+      .collection<User>("users")
+      .countDocuments({ role: UserRole.Professor });
+    const appointmentsCount = await db
+      .collection<Appointment>("appointments")
+      .countDocuments();
 
     const results = {
       studentsCount,
@@ -419,7 +463,9 @@ export const getAggregates = async (): Promise<{
     throw err;
   }
 };
-export const getProfessorsAdvisorsByUserId = async (userId: ObjectId | string): Promise<User[]> => {
+export const getProfessorsAdvisorsByUserId = async (
+  userId: ObjectId | string
+): Promise<User[]> => {
   return new Promise(async (resolve, reject) => {
     try {
       let professors = await getProfessorsByUserId(ensureObjectId(userId));
@@ -440,19 +486,19 @@ export const getProfessorsAdvisorsByUserId = async (userId: ObjectId | string): 
 
       if (all) {
         let db = await getDB();
-        const usersCollection = db.collection<User>('users');
-        const allProfiles = await usersCollection.find({ _id: { $in: all.map(id => new ObjectId(id)) } }).toArray();
-
+        const usersCollection = db.collection<User>("users");
+        const allProfiles = await usersCollection
+          .find({ _id: { $in: all.map((id) => new ObjectId(id)) } })
+          .toArray();
 
         resolve(allProfiles);
-
       } else {
         reject(new MongoFindError("Professors and advisors Not Found"));
       }
     } catch (err) {
       throw err;
     }
-  })
+  });
 };
 export const getProfessorsAdvisorsByUserIdButOne = async (
   userId: ObjectId | string,
@@ -475,15 +521,14 @@ export const getProfessorsAdvisorsByUserIdButOne = async (
           all.push(advisor._id.toString());
         }
       });
-      all = all.filter(item => item !== professorId.toString());
+      all = all.filter((item) => item !== professorId.toString());
 
       if (all) {
-
         let db = await getDB();
-        const usersCollection = db.collection<User>('users');
-        const allProfiles = await usersCollection.find({ _id: { $in: all.map(id => new ObjectId(id)) } }).toArray();
-
-
+        const usersCollection = db.collection<User>("users");
+        const allProfiles = await usersCollection
+          .find({ _id: { $in: all.map((id) => new ObjectId(id)) } })
+          .toArray();
 
         resolve(allProfiles);
       } else {
@@ -495,13 +540,16 @@ export const getProfessorsAdvisorsByUserIdButOne = async (
   });
 };
 
-
-export const getAllStudentsInClassByClassId = async (classId: ObjectId | string): Promise<User[]> => {
+export const getAllStudentsInClassByClassId = async (
+  classId: ObjectId | string
+): Promise<User[]> => {
   return new Promise(async (resolve, reject) => {
     try {
       const db = await getDB();
       const courseCollection = db.collection<Course>("courses");
-      const course = await courseCollection.findOne({ _id: ensureObjectId(classId) });
+      const course = await courseCollection.findOne({
+        _id: ensureObjectId(classId),
+      });
       if (course) {
         const studentIds = course.students;
         const userCollection = db.collection<User>("users");
@@ -516,10 +564,10 @@ export const getAllStudentsInClassByClassId = async (classId: ObjectId | string)
         if (students) {
           resolve(students);
         }
-
-
       } else {
-        reject(new MongoFindError("List of students for given course ID not found"));
+        reject(
+          new MongoFindError("List of students for given course ID not found")
+        );
       }
     } catch (err) {
       throw err;
@@ -527,120 +575,130 @@ export const getAllStudentsInClassByClassId = async (classId: ObjectId | string)
   });
 };
 
-export const getPastMeetings = async (student: ObjectId, status: AppointmentStatus): Promise<Appointment[]> => {
+export const getPastMeetings = async (
+  student: ObjectId,
+  status: AppointmentStatus
+): Promise<Appointment[]> => {
   try {
     const db = await getDB();
-    const collection = db.collection<User>('users');
+    const collection = db.collection<User>("users");
     const pipeline = [
       {
         $match: { _id: student },
       },
       {
         $lookup: {
-          from: 'appointments',
+          from: "appointments",
           let: { id: "$_id" },
           pipeline: [
             // checking for student appointment & status accepted & any end date/time less than the current date/time
             {
               $match: {
-                $and: [{ $expr: { $eq: ['$student', '$$id'] } }, { $expr: { $eq: ['$status', status] } },
-                { $expr: { $lt: ['$endDateTime', new Date()] } }
-                ]
-              }
+                $and: [
+                  { $expr: { $eq: ["$student", "$$id"] } },
+                  { $expr: { $eq: ["$status", status] } },
+                  { $expr: { $lt: ["$endDateTime", new Date()] } },
+                ],
+              },
             },
           ],
-          as: 'appointment',
+          as: "appointment",
         },
       },
       {
-        $unwind: { path: '$appointment', preserveNullAndEmptyArrays: false },
+        $unwind: { path: "$appointment", preserveNullAndEmptyArrays: false },
       },
     ];
 
-    const result: AggregationCursor<Appointment> = collection.aggregate(pipeline);
+    const result: AggregationCursor<Appointment> =
+      collection.aggregate(pipeline);
     const appointmentArray: Appointment[] = await result.toArray();
     return appointmentArray;
   } catch (err) {
     throw err;
   }
 };
-export const getPendingAppointmentsByProfessorId = async (professorId: ObjectId | string, status:string): Promise<FullAppointment[] | null> => {
+export const getPendingAppointmentsByProfessorId = async (
+  professorId: ObjectId | string,
+  status: string
+): Promise<FullAppointment[] | null> => {
   return new Promise(async (resolve, reject) => {
     try {
       const db = await getDB();
       const appointmentCollection = db.collection<Appointment>("appointments");
-      const results: AggregationCursor<FullAppointment> = await appointmentCollection.aggregate([
-        {
-          $match: {
-            professor: ensureObjectId(professorId),
-            status: status,  
-            studentCancelled: false,
-          },
-        },
-        {
-          $lookup: {
-            from: 'users',
-            localField: 'student',
-            foreignField: '_id',
-            as: 'studentInfo',
-          },
-        },
-        {
-          $lookup: {
-            from: 'users',
-            localField: 'professor',
-            foreignField: '_id',
-            as: 'professorInfo',
-          },
-        },
-        {
-          $lookup: {
-            from: 'users',
-            localField: 'guest._id',
-            foreignField: '_id',
-            as: 'guestInfo',
-          },
-        },
-        {
-          $project: {
-            _id: 1,
-            student: 1,
-            professor: 1,
-            startDateTime: 1,
-            endDateTime: 1,
-            status: 1,
-            reason: 1,
-            location: 1,
-            guest: 1,
-            secondaryStatus: 1,
-            summary: 1,
-            createdAt: 1,
-            updatedAt: 1,
-            studentCancelled: 1,
-            studentName: {
-              $concat: [
-                { $arrayElemAt: ['$studentInfo.firstName', 0] },
-                ' ',
-                { $arrayElemAt: ['$studentInfo.lastName', 0] },
-              ],
-            },
-            professorName: {
-              $concat: [
-                { $arrayElemAt: ['$professorInfo.firstName', 0] },
-                ' ',
-                { $arrayElemAt: ['$professorInfo.lastName', 0] },
-              ],
-            },
-            guestName: {
-              $concat: [
-                { $arrayElemAt: ['$guestInfo.firstName', 0] },
-                ' ',
-                { $arrayElemAt: ['$guestInfo.lastName', 0] },
-              ],
+      const results: AggregationCursor<FullAppointment> =
+        await appointmentCollection.aggregate([
+          {
+            $match: {
+              professor: ensureObjectId(professorId),
+              status: status,
+              studentCancelled: false,
             },
           },
-        },
-      ]);
+          {
+            $lookup: {
+              from: "users",
+              localField: "student",
+              foreignField: "_id",
+              as: "studentInfo",
+            },
+          },
+          {
+            $lookup: {
+              from: "users",
+              localField: "professor",
+              foreignField: "_id",
+              as: "professorInfo",
+            },
+          },
+          {
+            $lookup: {
+              from: "users",
+              localField: "guest._id",
+              foreignField: "_id",
+              as: "guestInfo",
+            },
+          },
+          {
+            $project: {
+              _id: 1,
+              student: 1,
+              professor: 1,
+              startDateTime: 1,
+              endDateTime: 1,
+              status: 1,
+              reason: 1,
+              location: 1,
+              guest: 1,
+              secondaryStatus: 1,
+              summary: 1,
+              createdAt: 1,
+              updatedAt: 1,
+              studentCancelled: 1,
+              studentName: {
+                $concat: [
+                  { $arrayElemAt: ["$studentInfo.firstName", 0] },
+                  " ",
+                  { $arrayElemAt: ["$studentInfo.lastName", 0] },
+                ],
+              },
+              professorName: {
+                $concat: [
+                  { $arrayElemAt: ["$professorInfo.firstName", 0] },
+                  " ",
+                  { $arrayElemAt: ["$professorInfo.lastName", 0] },
+                ],
+              },
+              guestName: {
+                $concat: [
+                  { $arrayElemAt: ["$guestInfo.firstName", 0] },
+                  " ",
+                  { $arrayElemAt: ["$guestInfo.lastName", 0] },
+                ],
+              },
+            },
+          },
+        ]);
 
       const resultArray = await results.toArray();
 
@@ -648,27 +706,35 @@ export const getPendingAppointmentsByProfessorId = async (professorId: ObjectId 
         resolve(resultArray);
       } else {
         resolve(null);
-      } 
+      }
     } catch (err) {
-      reject(err); 
+      reject(err);
     }
   });
 };
 
-export const getProfessorInfoByProfessorId = async (professorId: ObjectId | string): Promise<User> => {
+export const getProfessorInfoByProfessorId = async (
+  professorId: ObjectId | string
+): Promise<User> => {
   return new Promise(async (resolve, reject) => {
     try {
       const db = await getDB();
       const userCollection = db.collection<User>("users");
-      const user = await userCollection.findOne({_id: ensureObjectId(professorId)});
-      if(user) {
-        if(user.role === UserRole.Professor) {
+      const user = await userCollection.findOne({
+        _id: ensureObjectId(professorId),
+      });
+      if (user) {
+        if (user.role === UserRole.Professor) {
           resolve(user);
         } else {
-          reject(new MongoFindError("The given ID exists, but is not a professor ID"))
+          reject(
+            new MongoFindError("The given ID exists, but is not a professor ID")
+          );
         }
       } else {
-        reject(new MongoFindError("Could not find a professor with the given ID"));
+        reject(
+          new MongoFindError("Could not find a professor with the given ID")
+        );
       }
     } catch (err) {
       throw err;
@@ -676,12 +742,20 @@ export const getProfessorInfoByProfessorId = async (professorId: ObjectId | stri
   });
 };
 
-export const getClassesByProfessor = async (professorId: ObjectId | string, studentId: string | ObjectId): Promise<{ courseName: string; courseCode: string }[]> => {
+export const getClassesByProfessor = async (
+  professorId: ObjectId | string,
+  studentId: string | ObjectId
+): Promise<{ courseName: string; courseCode: string }[]> => {
   return new Promise(async (resolve, reject) => {
     try {
       let db = await getDB();
-      const collection = db.collection<Course>('courses');
-      const result = await collection.find({ students: ensureObjectId(studentId), professorId: ensureObjectId(professorId) }).toArray();
+      const collection = db.collection<Course>("courses");
+      const result = await collection
+        .find({
+          students: ensureObjectId(studentId),
+          professorId: ensureObjectId(professorId),
+        })
+        .toArray();
       let classesList: { courseName: string; courseCode: string }[] = [];
 
       if (result) {
@@ -702,15 +776,13 @@ export const getClassesByProfessor = async (professorId: ObjectId | string, stud
 };
 
 export const getStudentsInAdvisorGroup = async (
-  professorId: ObjectId | string,
-
+  professorId: ObjectId | string
 ): Promise<User[]> => {
   try {
     let db = await getDB();
 
     const advisorCollection = db.collection<Advisor>("advisors");
-    const userCollection = db.collection<User>('users');
-
+    const userCollection = db.collection<User>("users");
 
     const advisorId = ensureObjectId(professorId);
 
@@ -721,26 +793,27 @@ export const getStudentsInAdvisorGroup = async (
         },
       },
       {
-        $unwind: '$students',
+        $unwind: "$students",
       },
       {
         $lookup: {
-          from: 'users', // Assuming the users collection is named 'users'
-          localField: 'students',
-          foreignField: '_id',
-          as: 'studentData',
+          from: "users", // Assuming the users collection is named 'users'
+          localField: "students",
+          foreignField: "_id",
+          as: "studentData",
         },
       },
       {
-        $unwind: '$studentData',
+        $unwind: "$studentData",
       },
       {
-        $replaceRoot: { newRoot: '$studentData' },
+        $replaceRoot: { newRoot: "$studentData" },
       },
     ];
 
-
-    const result: AggregationCursor<User> = await advisorCollection.aggregate(pipeline);
+    const result: AggregationCursor<User> = await advisorCollection.aggregate(
+      pipeline
+    );
     const results: User[] = await result.toArray();
 
     return results;
@@ -751,13 +824,13 @@ export const getStudentsInAdvisorGroup = async (
 
 export const getFilteredStudentsInAdvisorGroup = async (
   professorId: ObjectId | string,
-  filter: { search: string, page: number, limit: number }
+  filter: { search: string; page: number; limit: number }
 ): Promise<User[]> => {
   try {
     let db = await getDB();
 
-    const advisorCollection = db.collection<Advisor>('advisors');
-    const userCollection = db.collection<User>('users');
+    const advisorCollection = db.collection<Advisor>("advisors");
+    const userCollection = db.collection<User>("users");
 
     const advisorId = ensureObjectId(professorId);
 
@@ -768,28 +841,28 @@ export const getFilteredStudentsInAdvisorGroup = async (
         },
       },
       {
-        $unwind: '$students',
+        $unwind: "$students",
       },
       {
         $lookup: {
-          from: 'users',
-          localField: 'students',
-          foreignField: '_id',
-          as: 'studentData',
+          from: "users",
+          localField: "students",
+          foreignField: "_id",
+          as: "studentData",
         },
       },
       {
-        $unwind: '$studentData',
+        $unwind: "$studentData",
       },
       {
-        $replaceRoot: { newRoot: '$studentData' },
+        $replaceRoot: { newRoot: "$studentData" },
       },
       {
         $match: {
           $or: [
-            { username: { $regex: filter.search, $options: 'i' } },
-            { lastName: { $regex: filter.search, $options: 'i' } },
-            { firstName: { $regex: filter.search, $options: 'i' } },
+            { username: { $regex: filter.search, $options: "i" } },
+            { lastName: { $regex: filter.search, $options: "i" } },
+            { firstName: { $regex: filter.search, $options: "i" } },
           ],
         },
       },
@@ -801,7 +874,9 @@ export const getFilteredStudentsInAdvisorGroup = async (
       },
     ];
 
-    const result: AggregationCursor<User> = await advisorCollection.aggregate(pipeline);
+    const result: AggregationCursor<User> = await advisorCollection.aggregate(
+      pipeline
+    );
     const results: User[] = await result.toArray();
 
     return results;
@@ -812,13 +887,13 @@ export const getFilteredStudentsInAdvisorGroup = async (
 
 export const getFilteredStudentsInAdvisorGroupCount = async (
   professorId: ObjectId | string,
-  filter: { search: string, page: number, limit: number }
+  filter: { search: string; page: number; limit: number }
 ): Promise<number> => {
   try {
     let db = await getDB();
 
-    const advisorCollection = db.collection<Advisor>('advisors');
-    const userCollection = db.collection<User>('users');
+    const advisorCollection = db.collection<Advisor>("advisors");
+    const userCollection = db.collection<User>("users");
 
     const advisorId = ensureObjectId(professorId);
 
@@ -829,28 +904,28 @@ export const getFilteredStudentsInAdvisorGroupCount = async (
         },
       },
       {
-        $unwind: '$students',
+        $unwind: "$students",
       },
       {
         $lookup: {
-          from: 'users',
-          localField: 'students',
-          foreignField: '_id',
-          as: 'studentData',
+          from: "users",
+          localField: "students",
+          foreignField: "_id",
+          as: "studentData",
         },
       },
       {
-        $unwind: '$studentData',
+        $unwind: "$studentData",
       },
       {
-        $replaceRoot: { newRoot: '$studentData' },
+        $replaceRoot: { newRoot: "$studentData" },
       },
       {
         $match: {
           $or: [
-            { username: { $regex: filter.search, $options: 'i' } },
-            { lastName: { $regex: filter.search, $options: 'i' } },
-            { firstName: { $regex: filter.search, $options: 'i' } },
+            { username: { $regex: filter.search, $options: "i" } },
+            { lastName: { $regex: filter.search, $options: "i" } },
+            { firstName: { $regex: filter.search, $options: "i" } },
           ],
         },
       },
@@ -862,7 +937,9 @@ export const getFilteredStudentsInAdvisorGroupCount = async (
       },
     ];
 
-    const result: AggregationCursor<User> = await advisorCollection.aggregate(pipeline);
+    const result: AggregationCursor<User> = await advisorCollection.aggregate(
+      pipeline
+    );
     const results: User[] = await result.toArray();
 
     return results.length;
@@ -871,20 +948,14 @@ export const getFilteredStudentsInAdvisorGroupCount = async (
   }
 };
 
-
-
-
-
-
-
 export const getNotStudentsInAdvisorGroup = async (
   professorId: ObjectId | string
 ): Promise<User[]> => {
   try {
     let db = await getDB();
 
-    const advisorCollection = db.collection<Advisor>('advisors');
-    const userCollection = db.collection<User>('users');
+    const advisorCollection = db.collection<Advisor>("advisors");
+    const userCollection = db.collection<User>("users");
 
     const advisorId = ensureObjectId(professorId);
 
@@ -895,33 +966,39 @@ export const getNotStudentsInAdvisorGroup = async (
         },
       },
       {
-        $unwind: '$students',
+        $unwind: "$students",
       },
       {
         $lookup: {
-          from: 'users',
-          localField: 'students',
-          foreignField: '_id',
-          as: 'studentData',
+          from: "users",
+          localField: "students",
+          foreignField: "_id",
+          as: "studentData",
         },
       },
       {
-        $unwind: '$studentData',
+        $unwind: "$studentData",
       },
       {
-        $replaceRoot: { newRoot: '$studentData' },
+        $replaceRoot: { newRoot: "$studentData" },
       },
     ];
 
-    const advisorResult: AggregationCursor<User> = await advisorCollection.aggregate(pipeline);
+    const advisorResult: AggregationCursor<User> =
+      await advisorCollection.aggregate(pipeline);
     const advisorStudentsInGroup = await advisorResult.toArray();
 
     // Get all students
-    const allStudents = await userCollection.find({ role: UserRole.Student }).toArray();
+    const allStudents = await userCollection
+      .find({ role: UserRole.Student })
+      .toArray();
 
     // Filter out students already in the advisor group
     const notInAdvisorGroup = allStudents.filter(
-      (student) => !advisorStudentsInGroup.some((advisorStudent) => advisorStudent._id.equals(student._id))
+      (student) =>
+        !advisorStudentsInGroup.some((advisorStudent) =>
+          advisorStudent._id.equals(student._id)
+        )
     );
 
     return notInAdvisorGroup;
@@ -935,8 +1012,8 @@ export const getNotStudentsInCourse = async (
   try {
     let db = await getDB();
 
-    const courseCollection = db.collection<Course>('courses');
-    const userCollection = db.collection<User>('users');
+    const courseCollection = db.collection<Course>("courses");
+    const userCollection = db.collection<User>("users");
 
     const courseIdObj = ensureObjectId(courseId);
 
@@ -947,33 +1024,39 @@ export const getNotStudentsInCourse = async (
         },
       },
       {
-        $unwind: '$students',
+        $unwind: "$students",
       },
       {
         $lookup: {
-          from: 'users',
-          localField: 'students',
-          foreignField: '_id',
-          as: 'studentData',
+          from: "users",
+          localField: "students",
+          foreignField: "_id",
+          as: "studentData",
         },
       },
       {
-        $unwind: '$studentData',
+        $unwind: "$studentData",
       },
       {
-        $replaceRoot: { newRoot: '$studentData' },
+        $replaceRoot: { newRoot: "$studentData" },
       },
     ];
 
-    const courseResult: AggregationCursor<User> = await courseCollection.aggregate(pipeline);
+    const courseResult: AggregationCursor<User> =
+      await courseCollection.aggregate(pipeline);
     const courseStudents = await courseResult.toArray();
 
     // Get all students
-    const allStudents = await userCollection.find({ role: UserRole.Student }).toArray();
+    const allStudents = await userCollection
+      .find({ role: UserRole.Student })
+      .toArray();
 
     // Filter out students already in the course
     const notInCourse = allStudents.filter(
-      (student) => !courseStudents.some((courseStudent) => courseStudent._id.equals(student._id))
+      (student) =>
+        !courseStudents.some((courseStudent) =>
+          courseStudent._id.equals(student._id)
+        )
     );
 
     return notInCourse;
@@ -981,18 +1064,90 @@ export const getNotStudentsInCourse = async (
     throw error;
   }
 };
-export const getProfessorClasses =async (professorId:ObjectId | string): Promise<Course[]> => {
-  return new Promise(async (resolve, reject)=>{
-    try{
-    const db = await getDB();
-    const courseCollection = db.collection<Course>("courses");
-    const course = await courseCollection.find({professorId: ensureObjectId(professorId)}).toArray();
-    if(course) {
-        resolve(course);
-      } else {
-        reject(new MongoFindError("Could not find any courses for the professor's given ID"));
-      }
+export const getProfessorClasses = async ( professorId: ObjectId | string ): Promise<Course[]> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const db = await getDB();
+      const courseCollection = db.collection<Course>("courses");
+      const course: AggregationCursor<Course> =
+        await courseCollection.aggregate([
+          {
+            $match: {
+              professorId: ensureObjectId(professorId),
+            },
+          },
+          {
+            $lookup: {
+              from: "users",
+              localField: "students",
+              foreignField: "_id",
+              as: "studentData",
+            },
+          },
+          {
+            $lookup: {
+              from: "users",
+              localField: "professorId",
+              foreignField: "_id",
+              as: "professorName",
+            },
+          },
+          {
+            $unwind: {
+              path: "$studentData",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $unwind: {
+              path: "$professorName",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $addFields: {
+              professorName: "$professorName.firstName",
+            },
+          },
+          {
+            $project: {
+              _id: 1,
+              courseName: 1,
+              courseCode: 1,
+              professorId: 1,
+              courseDepartment: 1,
+              courseDescription: 1,
+              professorName: 1,
+              createdAt: 1,
+              updatedAt: 1,
+              studentData: {
+                _id: 1,
+                username: 1,
+                firstName: 1,
+                lastName: 1,
+                grade: 1,
+              },
+            },
+          },
+          {
+            $group: {
+              _id: "$_id",
+              courseName: { $first: "$courseName" },
+              courseCode: { $first: "$courseCode" },
+              professorId: { $first: "$professorId" },
+              courseDepartment: { $first: "$courseDepartment" },
+              courseDescription: { $first: "$courseDescription" },
+              professorName: { $first: "$professorName" },
+              createdAt: { $first: "$createdAt" },
+              updatedAt: { $first: "$updatedAt" },
+              students: { $push: "$studentData" },
+            },
+          },
+        ]);
+      const courses = await course.toArray();
+      resolve(courses);
     } catch (err) {
-      throw err;
+      reject(err);
     }
-  })};
+  });
+};
