@@ -27,6 +27,7 @@ import {
   insertNewCourse,
   insertStudentCourse,
   removeStudentFromAdvisor,
+  removeStudentFromCourse,
 } from "../mongo/mutations/professor";
 import {
   insertAvailability,
@@ -105,6 +106,39 @@ router.post(
     }
   }
 );
+
+//remove student from course
+router.post("/remove-student-course", isLoggedIn, isProfessor, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    let me = req.session.Me;
+      if (me && me.username && me.username.length > 0) {
+        const user = await getUserbyUsername(me.username);
+        if (user) {
+          const courseId = req.body.courseId;
+          const studentId = req.body.studentId;
+          const course = await removeStudentFromCourse(
+            ensureObjectId(courseId),
+            ensureObjectId(studentId)
+          );
+          //removal notification for student
+          let message = `${user.firstName} ${user.lastName} removed you from a class`;
+          let not = await createNotification(
+            studentId,
+            "Removed from course",
+            message
+          );
+          res.json(course);
+        } else {
+          throw new UnauthorizedError("Unauthorized");
+        }
+      } else {
+        throw new UnauthorizedError("Unauthorized");
+      }
+  } catch (err) {
+    next(err);
+  }
+});
+
 
 //add student to course
 router.post(

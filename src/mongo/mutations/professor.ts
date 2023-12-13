@@ -35,6 +35,32 @@ export const insertNewCourse = async (courseCode:string, courseName:string, cour
     })
 } 
 
+//remove student from course
+export const removeStudentFromCourse = async (courseId: ObjectId, studentId: ObjectId): Promise<boolean> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let db = await getDB();
+      const coursesCollection = db.collection<Course>('courses');
+      const deletedResult = await coursesCollection.updateOne(
+        { _id: courseId },
+        { $pull: { students: studentId } }
+      );
+      console.log(deletedResult);
+      if (deletedResult.matchedCount > 0) {
+        if (deletedResult.modifiedCount > 0) {
+          resolve(true);
+        } else {
+          resolve(false);
+        }
+      } else {
+        throw new MongoUpdateError("Something went wrong removing student from course")
+      }
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
 //add student to course
 export const insertStudentCourse = async (courseId:ObjectId, studentId:ObjectId): Promise <Course>  => {
     return new Promise (async (resolve,reject) => {
