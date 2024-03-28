@@ -1,7 +1,7 @@
 
 # 📅 Scheduling Server 
 
-A Student Scheduling App Server! A team project.  This Node.js and TypeScript-powered API allows students to schedule appointments with their professors 🚀
+A Student Scheduling App Server! A team project(class group).  This Node.js and TypeScript-powered API allows students to schedule appointments with their professors 🚀
 
 ## ✨ Features
 
