@@ -61,22 +61,6 @@ To get started, follow these steps:
    yarn start:dev
    ```
 
-## 🐳 Docker Support (Optional)
-
-To run the app with Docker, follow these additional steps:
-
-1. **Build the Docker Container:**
-
-   ```bash
-   make build
-   ```
-
-2. **Run the Docker Container:**
-
-   ```bash
-   make up
-   ```
-
 ## 📄 API Documentation
 
 API instructions 
